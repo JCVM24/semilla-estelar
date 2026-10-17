@@ -5,16 +5,16 @@
 // =====================================================================
 importScripts("./config.js");
 
-const VERSION = "semilla-v1";
+const VERSION = "semilla-v2";
 const SHELL = [
   "./",
   "./index.html",
   "./config.js",
-  "./vendor/supabase.js",
+  "./supabase.js",
   "./manifest.webmanifest",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
-  "./icons/badge-96.png",
+  "./icon-192.png",
+  "./icon-512.png",
+  "./badge-96.png",
 ];
 
 self.addEventListener("install", (e) => {
@@ -70,8 +70,8 @@ self.addEventListener("push", (e) => {
       body: p.body || "",
       tag: p.tag,
       renotify: true,
-      icon: "./icons/icon-192.png",
-      badge: "./icons/badge-96.png",
+      icon: "./icon-192.png",
+      badge: "./badge-96.png",
       vibrate: [200, 100, 200],
       data: d,
       actions,
@@ -94,7 +94,7 @@ self.addEventListener("notificationclick", (e) => {
         .then((r) => { if (!r.ok) throw new Error(String(r.status)); })
         .catch(() => self.registration.showNotification("No se pudo posponer", {
           body: "Revisa tu conexión. Abre la app para completar la misión.",
-          icon: "./icons/icon-192.png", badge: "./icons/badge-96.png", tag: "snooze-error",
+          icon: "./icon-192.png", badge: "./badge-96.png", tag: "snooze-error",
         }))
     );
     return;

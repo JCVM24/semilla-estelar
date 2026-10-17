@@ -5,6 +5,8 @@ RPG de vida real para Android: misiones, rachas, cofres y **recordatorios push q
 - **App:** página web instalable (PWA) alojada gratis en GitHub Pages.
 - **Datos y avisos:** Supabase (inicio de sesión, base de datos, funciones y tarea programada cada minuto).
 
+> La app web vive en la raíz del repositorio, sin carpetas. El código de Supabase (`schema.sql`, `cron.sql` y las dos funciones) está en la carpeta `supabase/` del zip; no hace falta subirlo a GitHub, solo copiarlo en el panel de Supabase.
+
 ---
 
 ## Guía de instalación (unos 30 minutos, una sola vez)
@@ -26,7 +28,7 @@ Hazlo desde el **computador**. Ten a mano un bloc de notas privado para guardar 
 ### Paso 3 · Crear el proyecto en Supabase
 
 1. En supabase.com crea un proyecto nuevo (por ejemplo `semilla-estelar`). Elige la región más cercana y guarda la contraseña de la base de datos.
-2. Cuando termine de crearse, ve a **SQL Editor › New query**, pega todo el contenido de [`supabase/schema.sql`](supabase/schema.sql) y toca **Run**. Debe decir *Success*.
+2. Cuando termine de crearse, ve a **SQL Editor › New query**, pega todo el contenido de `supabase/schema.sql` (del zip) y toca **Run**. Debe decir *Success*.
 
 ### Paso 4 · Configurar el inicio de sesión
 
@@ -48,15 +50,15 @@ En **Edge Functions › Secrets**, agrega estos cuatro:
 
 En **Edge Functions › Deploy a new function › Via Editor**:
 
-1. Nombre **`send-reminders`**. Borra el código de ejemplo, pega el de [`supabase/functions/send-reminders/index.ts`](supabase/functions/send-reminders/index.ts) y publica.
-2. Repite con el nombre **`snooze`** y el código de [`supabase/functions/snooze/index.ts`](supabase/functions/snooze/index.ts).
+1. Nombre **`send-reminders`**. Borra el código de ejemplo, pega el de `supabase/functions/send-reminders/index.ts` (del zip) y publica.
+2. Repite con el nombre **`snooze`** y el código de `supabase/functions/snooze/index.ts` (del zip).
 3. En los **Details/Settings** de **cada** función, **desactiva "Enforce JWT verification"** (o "Verify JWT"). Están protegidas por el secreto y por una firma.
 
 > Si prefieres la terminal: `npx supabase login`, `npx supabase link --project-ref TU-PROYECTO` y `npx supabase functions deploy` (el archivo `supabase/config.toml` ya desactiva la verificación JWT).
 
 ### Paso 7 · Activar la tarea programada
 
-1. Abre [`supabase/cron.sql`](supabase/cron.sql), cópialo al **SQL Editor** y reemplaza:
+1. Abre `supabase/cron.sql` (del zip), cópialo al **SQL Editor** y reemplaza:
    - `TU-PROYECTO` por el *Project ID* (está en **Project Settings › General**, o en tu URL `https://ESTO.supabase.co`).
    - `TU-SECRETO` por tu `APP_SECRET`.
 2. Toca **Run**. Ese texto queda solo dentro de tu base de datos; no lo guardes editado en GitHub.
