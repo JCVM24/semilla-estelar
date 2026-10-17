@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Generar claves · Semilla Estelar</title>
+<meta name="robots" content="noindex">
+<style>
+:root{--bg:#0b1013;--s:#131c21;--l:#33454d;--fg:#ebe4d3;--m:#8e9c98;--a:#dca45a;--d:#d8775f;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding-block:32px;padding-inline:16px}
+main{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{font-family:Georgia,serif;font-weight:600;margin:0;font-size:30px}
+p{margin:0;color:var(--m)}
+.warn{padding:12px 14px;border-radius:10px;background:rgba(216,119,95,.15);color:var(--fg)}
+.k{display:flex;flex-direction:column;gap:6px;padding:14px;border-radius:12px;background:var(--s);border:1px solid var(--l)}
+.k b{font-size:13px;letter-spacing:.04em}
+.k small{color:var(--m)}
+code{display:block;word-break:break-all;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);padding:10px;border-radius:8px;user-select:all}
+button{font:inherit;cursor:pointer;border-radius:999px;border:1px solid var(--l);background:var(--s);color:var(--fg);padding:8px 14px;align-self:flex-start}
+.out{display:flex;flex-direction:column;gap:14px}
+[hidden]{display:none!important}
+button.p{background:var(--a);color:#1b130a;border-color:transparent;font-weight:600}
+:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Generar claves</h1>
+  <p>Esta página crea, dentro de tu navegador, las claves para enviar notificaciones y el secreto del servidor. Nada se envía a ningún lado.</p>
+  <div class="warn">No compartas la clave privada ni el secreto con nadie, ni siquiera en un chat. Solo se pegan en Supabase.</div>
+  <button class="p" id="gen">Generar claves</button>
+  <div id="out" class="out" hidden>
+    <div class="k"><b>VAPID_PUBLIC_KEY</b><small>Va en config.js y en Supabase › Edge Functions › Secrets. Es pública.</small><code id="pub"></code><button data-c="pub">Copiar</button></div>
+    <div class="k"><b>VAPID_PRIVATE_KEY</b><small>Solo en Supabase › Edge Functions › Secrets. Privada.</small><code id="priv"></code><button data-c="priv">Copiar</button></div>
+    <div class="k"><b>APP_SECRET</b><small>En Supabase › Edge Functions › Secrets y en cron.sql. Privado.</small><code id="sec"></code><button data-c="sec">Copiar</button></div>
+    <p>Guárdalas en un lugar seguro (por ejemplo, una nota privada). Si recargas la página se generan otras distintas.</p>
+  </div>
+</main>
+<script>
+const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+document.getElementById("gen").onclick = async () => {
+  const kp = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+  const pub = await crypto.subtle.exportKey("raw", kp.publicKey);
+  const jwk = await crypto.subtle.exportKey("jwk", kp.privateKey);
+  const sec = crypto.getRandomValues(new Uint8Array(32));
+  document.getElementById("pub").textContent = b64u(pub);
+  document.getElementById("priv").textContent = jwk.d;
+  document.getElementById("sec").textContent = Array.from(sec, (x) => x.toString(16).padStart(2, "0")).join("");
+  document.getElementById("out").hidden = false;
+  document.getElementById("gen").textContent = "Generar otras";
+};
+document.addEventListener("click", async (e) => {
+  const id = e.target.dataset && e.target.dataset.c; if (!id) return;
+  const el = document.getElementById(id);
+  try { await navigator.clipboard.writeText(el.textContent); e.target.textContent = "Copiada"; }
+  catch { const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); e.target.textContent = "Seleccionada: cópiala"; }
+  setTimeout(() => (e.target.textContent = "Copiar"), 2000);
+});
+</script>
+</body>
+</html>

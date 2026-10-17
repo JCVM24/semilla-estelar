@@ -1,0 +1,1223 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Semilla Estelar</title>
+<meta name="description" content="RPG de vida real: misiones, rachas, cofres y recordatorios.">
+<meta name="theme-color" content="#0b1013">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Manrope:wght@400;500;600;700&family=Spectral:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+html{-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+
+/* Layout: una sola columna tipo "bitácora de expedición" en el móvil; en escritorio, riel lateral + panel. Noche de selva con luz de estrellas. */
+:root{
+  --bg:#0b1013; --bg-2:#0f161a; --surface:#131c21; --surface-2:#19242a; --line:#25333a; --line-2:#33454d;
+  --fg:#ebe4d3; --fg-2:#c9c2b2; --muted:#8e9c98;
+  --amber:#dca45a; --amber-soft:rgba(220,164,90,.14); --bronze:#a8743f;
+  --forest:#6a9b74; --forest-soft:rgba(106,155,116,.16);
+  --star:#a7bde9; --star-soft:rgba(167,189,233,.14);
+  --danger:#d8775f; --danger-soft:rgba(216,119,95,.15);
+  --f-display:"Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --f-read:"Spectral", Georgia, "Times New Roman", serif;
+  --f-ui:"Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r:14px; --r-sm:9px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{
+  margin:0; color:var(--fg); font-family:var(--f-ui); font-size:15px; line-height:1.5;
+  background:
+    radial-gradient(1200px 600px at 85% -10%, rgba(167,189,233,.10), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(106,155,116,.10), transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+  min-height:100vh;
+}
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.7}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:6px}
+.app{position:relative;z-index:1;display:grid;grid-template-columns:1fr;min-height:100vh}
+main{padding-block:20px 110px;padding-inline:16px;max-width:880px;width:100%;margin:0 auto;min-width:0}
+/* nav */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:space-around;
+  background:rgba(11,16,19,.92);backdrop-filter:blur(10px);border-top:1px solid var(--line);
+  padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))}
+.nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;
+  color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.02em;padding:6px 2px;border-radius:10px}
+.nav button svg{width:22px;height:22px}
+.nav button[aria-current="page"]{color:var(--amber)}
+.nav .brand{display:none}
+@media (min-width:900px){
+  .app{grid-template-columns:220px 1fr}
+  .nav{position:sticky;top:0;height:100vh;flex-direction:column;justify-content:flex-start;gap:4px;border-top:0;
+    border-right:1px solid var(--line);padding:24px 14px;background:rgba(11,16,19,.6)}
+  .nav button{flex:none;flex-direction:row;gap:12px;font-size:14px;padding:10px 12px;justify-content:flex-start}
+  .nav button[aria-current="page"]{background:var(--amber-soft)}
+  .nav .brand{display:block;font-family:var(--f-display);font-size:26px;font-weight:600;color:var(--fg);padding:0 12px 18px;line-height:1.1}
+  .nav .brand small{display:block;font-family:var(--f-ui);font-size:11px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:6px}
+  main{padding-block:32px 60px;padding-inline:32px}
+}
+/* type */
+h1,h2,h3{font-family:var(--f-display);font-weight:600;margin:0;text-wrap:balance;line-height:1.1}
+h1{font-size:34px} h2{font-size:26px} h3{font-size:20px}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+.stack{display:flex;flex-direction:column;gap:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.sec{display:flex;flex-direction:column;gap:12px;margin-top:28px}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;border:1px solid var(--line-2);
+  background:var(--surface-2);padding:9px 16px;font-weight:600;font-size:14px;transition:background .15s,border-color .15s,transform .1s}
+.btn:hover{border-color:var(--amber)}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:linear-gradient(180deg,#e6b46c,#c98d45);color:#1b130a;border-color:transparent}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.ghost{background:none}
+.btn.danger{border-color:var(--danger);color:var(--danger);background:none}
+.btn.sm{padding:6px 12px;font-size:13px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.icon-btn{width:40px;height:40px;border-radius:50%;display:inline-grid;place-items:center;border:1px solid var(--line-2);background:var(--surface-2)}
+.icon-btn svg{width:18px;height:18px}
+/* chips */
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;
+  background:var(--surface-2);border:1px solid var(--line);color:var(--fg-2);white-space:nowrap}
+.chip.amber{background:var(--amber-soft);border-color:transparent;color:var(--amber)}
+.chip.forest{background:var(--forest-soft);border-color:transparent;color:var(--forest)}
+.chip.star{background:var(--star-soft);border-color:transparent;color:var(--star)}
+.chip.danger{background:var(--danger-soft);border-color:transparent;color:var(--danger)}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+/* hero */
+.hero{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;padding:20px;border-radius:20px;
+  background:linear-gradient(140deg,rgba(25,36,42,.95),rgba(15,22,26,.95));border:1px solid var(--line);position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;inset:auto -40px -60px auto;width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle,rgba(220,164,90,.18),transparent 70%);pointer-events:none}
+.emblem{width:88px;height:88px;flex:none}
+.emblem svg{width:100%;height:100%}
+.hero-info{min-width:0;display:flex;flex-direction:column;gap:6px}
+.hero-title{font-family:var(--f-display);font-size:30px;font-weight:600;line-height:1}
+.xpbar{height:8px;border-radius:99px;background:var(--bg);overflow:hidden;border:1px solid var(--line)}
+.xpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--bronze),var(--amber));border-radius:99px;transition:width .6s ease}
+.hero-stats{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--fg-2)}
+.hero-stats b{color:var(--fg);font-variant-numeric:tabular-nums}
+/* progress ring line */
+.dayprog{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line)}
+.dayprog .bar{flex:1;height:6px;border-radius:99px;background:var(--bg);overflow:hidden}
+.dayprog .bar i{display:block;height:100%;background:var(--forest);transition:width .5s}
+/* mission card */
+.mlist{display:flex;flex-direction:column;gap:10px}
+.mcard{display:grid;grid-template-columns:62px 1fr auto;gap:12px;align-items:start;padding:14px;border-radius:var(--r);
+  background:var(--surface);border:1px solid var(--line);transition:border-color .2s,opacity .2s}
+.mcard.now{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber-soft),0 10px 30px -18px rgba(220,164,90,.5)}
+.mcard.done{opacity:.62}
+.mcard.done .mtitle{text-decoration:line-through;text-decoration-color:var(--forest)}
+.mtime{font-variant-numeric:tabular-nums;font-size:13px;font-weight:700;color:var(--fg-2);line-height:1.2;padding-top:3px}
+.mtime small{display:block;font-weight:500;color:var(--muted);font-size:11.5px}
+.mbody{min-width:0;display:flex;flex-direction:column;gap:6px}
+.mtitle{font-weight:700;font-size:15.5px;line-height:1.3;overflow-wrap:anywhere}
+.mchips{display:flex;gap:6px;flex-wrap:wrap}
+.mdesc{font-size:13.5px;color:var(--fg-2);white-space:pre-wrap;overflow-wrap:anywhere}
+.more{background:none;border:0;color:var(--muted);font-size:12.5px;padding:0;text-align:left;font-weight:600}
+.check{width:44px;height:44px;border-radius:50%;border:2px solid var(--line-2);background:transparent;display:grid;place-items:center;transition:all .2s}
+.check svg{width:20px;height:20px;opacity:0;transition:opacity .2s}
+.check:hover{border-color:var(--forest)}
+.check.on{background:var(--forest);border-color:var(--forest)}
+.check.on svg{opacity:1;color:#0b1013}
+.mactions{display:flex;flex-direction:column;gap:8px;align-items:center}
+.timer{font-size:12px;font-variant-numeric:tabular-nums;color:var(--amber);font-weight:700}
+.tbtn{width:34px;height:34px;border-radius:50%;border:1px solid var(--line-2);background:none;display:grid;place-items:center;color:var(--fg-2)}
+.tbtn svg{width:15px;height:15px}
+.tbtn.run{border-color:var(--amber);color:var(--amber)}
+@media (max-width:420px){.mcard{grid-template-columns:52px 1fr auto;gap:10px;padding:12px}}
+/* empty */
+.empty{padding:28px 20px;border-radius:var(--r);border:1px dashed var(--line-2);text-align:center;color:var(--muted)}
+/* streak strip */
+.streaks{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.streak{flex:none;min-width:140px;padding:12px 14px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line)}
+.streak b{font-family:var(--f-display);font-size:30px;line-height:1;color:var(--amber);font-variant-numeric:tabular-nums}
+.streak div{font-size:12.5px;color:var(--fg-2);margin-top:4px;line-height:1.3}
+/* chart */
+.chartbox{padding:16px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line)}
+.chartbox svg{width:100%;height:auto;display:block}
+/* week */
+.weeknav{display:flex;align-items:center;gap:10px}
+.week{display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:1100px){.week{grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}}
+.wday{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;min-width:0}
+.wday.today{border-color:var(--amber)}
+.wday h4{margin:0 0 8px;font-size:13px;font-weight:700;display:flex;justify-content:space-between;letter-spacing:.02em}
+.wday h4 span{color:var(--muted);font-weight:600}
+.wslot{display:flex;gap:8px;align-items:flex-start;padding:7px 8px;border-radius:8px;background:var(--bg-2);margin-top:6px;border-left:3px solid var(--line-2);font-size:12.5px;cursor:pointer;width:100%;text-align:left;border-top:0;border-right:0;border-bottom:0}
+.wslot.done{opacity:.55}
+.wslot.clash{border-left-color:var(--danger)}
+.wslot .t{font-variant-numeric:tabular-nums;color:var(--muted);flex:none;width:44px}
+.wslot .n{min-width:0;overflow-wrap:anywhere;font-weight:600}
+/* segmented */
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{border:1px solid var(--line-2);background:none;border-radius:999px;padding:6px 13px;font-size:13px;font-weight:600;color:var(--fg-2)}
+.seg button[aria-pressed="true"]{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
+/* project */
+.pcard{padding:16px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.pbar{height:6px;border-radius:99px;background:var(--bg);overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--star)}
+.mile{display:flex;gap:10px;align-items:center;font-size:14px;padding:6px 0;border-top:1px solid var(--line)}
+.mile input{width:18px;height:18px;accent-color:var(--forest)}
+.mile.done span{text-decoration:line-through;color:var(--muted)}
+/* list card in Misiones */
+.lcard{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:14px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line)}
+.lcard .mbody{flex:1}
+.lcard.paused{opacity:.55}
+/* chests */
+.rarities{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:640px){.rarities{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.rar{padding:14px 12px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);text-align:left;display:flex;flex-direction:column;gap:4px;position:relative}
+.rar[aria-pressed="true"]{border-color:var(--rc);box-shadow:0 0 0 1px var(--rc) inset}
+.rar[disabled]{opacity:.4;cursor:not-allowed}
+.rar .rn{font-family:var(--f-display);font-size:20px;font-weight:600;color:var(--rc)}
+.rar .rc{font-size:12.5px;color:var(--fg-2)}
+.cats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:640px){.cats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.cat{padding:12px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);text-align:left;display:flex;gap:10px;align-items:center;font-weight:600;font-size:13.5px}
+.cat svg{width:22px;height:22px;flex:none;color:var(--amber)}
+.cat[aria-pressed="true"]{border-color:var(--amber);background:var(--amber-soft)}
+.altar{padding:20px;border-radius:20px;border:1px solid var(--line);background:linear-gradient(160deg,var(--surface-2),var(--bg-2));display:flex;flex-direction:column;gap:16px}
+.frag-count{display:flex;align-items:center;gap:10px}
+.frag-count b{font-family:var(--f-display);font-size:40px;line-height:1;color:var(--star);font-variant-numeric:tabular-nums}
+.grim{display:flex;flex-direction:column;gap:8px}
+.gitem{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);text-align:left;width:100%}
+.gitem .gt{font-family:var(--f-display);font-size:18px;font-weight:600;line-height:1.2;overflow-wrap:anywhere}
+.gitem .gm{font-size:12px;color:var(--muted)}
+.gitem .gbody{min-width:0;flex:1}
+.gem{width:12px;height:12px;transform:rotate(45deg);border-radius:2px;flex:none}
+/* character */
+.attrs{display:flex;flex-direction:column;gap:12px}
+.attr{display:grid;grid-template-columns:120px 1fr 52px;gap:12px;align-items:center;font-size:14px}
+.attr .ab{height:8px;border-radius:99px;background:var(--bg);overflow:hidden;border:1px solid var(--line)}
+.attr .ab i{display:block;height:100%;border-radius:99px}
+.attr .al{text-align:right;font-variant-numeric:tabular-nums;color:var(--fg-2);font-size:13px}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:640px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.stat{padding:14px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line)}
+.stat b{display:block;font-family:var(--f-display);font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.heat{display:grid;grid-template-rows:repeat(7,1fr);grid-auto-flow:column;gap:3px;justify-content:start;overflow-x:auto}
+.heat i{width:14px;height:14px;border-radius:3px;background:var(--surface-2)}
+/* modal */
+.scrim{position:fixed;inset:0;z-index:50;background:rgba(5,8,10,.72);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;animation:fade .2s}
+@media (min-width:700px){.scrim{align-items:center;padding:24px}}
+.modal{width:100%;max-width:640px;max-height:92vh;overflow:auto;background:var(--bg-2);border:1px solid var(--line-2);border-radius:20px 20px 0 0;
+  padding:20px 16px calc(20px + env(safe-area-inset-bottom,0px));animation:rise .25s ease}
+@media (min-width:700px){.modal{border-radius:20px;padding:26px}}
+.modal-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+@keyframes fade{from{opacity:0}}
+@keyframes rise{from{transform:translateY(30px);opacity:0}}
+/* form */
+.field{display:flex;flex-direction:column;gap:6px}
+.field label,.lbl{font-size:12px;font-weight:700;color:var(--fg-2);letter-spacing:.04em}
+.inp,select.inp,textarea.inp{width:100%;background:var(--surface);border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;font-size:15px}
+textarea.inp{min-height:110px;resize:vertical;line-height:1.5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:460px){.grid2{grid-template-columns:1fr}}
+.slotrow{display:grid;grid-template-columns:1.2fr 1fr .8fr 36px;gap:8px;align-items:center}
+.slotrow .inp{padding:8px;font-size:14px}
+.daychips{display:flex;gap:6px;flex-wrap:wrap}
+.daychips button{width:40px;height:36px;border-radius:9px;border:1px solid var(--line-2);background:none;font-size:12.5px;font-weight:700;color:var(--fg-2)}
+.daychips button[aria-pressed="true"]{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
+.confirm-box{padding:12px;border-radius:10px;background:var(--danger-soft);display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px}
+/* reading */
+.read{font-family:var(--f-read);font-size:17px;line-height:1.7;color:var(--fg)}
+.read p{margin:0 0 1em;max-width:62ch}
+.read p:first-of-type::first-letter{font-family:var(--f-display);float:left;font-size:3.2em;line-height:.85;padding:6px 8px 0 0;color:var(--amber)}
+.takeaway{margin-top:8px;padding:14px 16px;border-radius:12px;background:var(--amber-soft);font-size:14.5px;color:var(--fg)}
+.takeaway b{color:var(--amber)}
+/* overlays */
+.overlay{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:radial-gradient(circle at center,rgba(20,28,33,.92),rgba(5,8,10,.97));animation:fade .3s;padding:24px;text-align:center}
+.lvlup{display:flex;flex-direction:column;align-items:center;gap:12px;max-width:360px}
+.lvlup .emblem{width:150px;height:150px;animation:glow 2.4s ease-in-out infinite}
+.lvlup h2{font-size:40px;color:var(--amber)}
+@keyframes glow{0%,100%{filter:drop-shadow(0 0 10px rgba(220,164,90,.35))}50%{filter:drop-shadow(0 0 30px rgba(220,164,90,.75))}}
+.chestfx{width:160px;height:150px;position:relative}
+.chestfx svg{width:100%;height:100%}
+.chestfx.shake{animation:shake .5s ease-in-out infinite}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+.chestfx .rays{position:absolute;inset:-60px;background:conic-gradient(from 0deg,transparent 0 10deg,var(--rcol) 12deg,transparent 14deg 40deg,var(--rcol) 42deg,transparent 44deg 80deg,var(--rcol) 82deg,transparent 84deg 130deg,var(--rcol) 132deg,transparent 134deg 190deg,var(--rcol) 192deg,transparent 194deg 250deg,var(--rcol) 252deg,transparent 254deg 310deg,var(--rcol) 312deg,transparent 314deg);
+  border-radius:50%;opacity:.25;animation:spin 8s linear infinite;mask:radial-gradient(circle,#000 30%,transparent 70%);-webkit-mask:radial-gradient(circle,#000 30%,transparent 70%)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:70;background:var(--surface-2);border:1px solid var(--line-2);
+  padding:10px 16px;border-radius:999px;font-size:13.5px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.4);animation:rise .25s;max-width:calc(100% - 32px);text-align:center}
+@media (min-width:900px){.toast{bottom:28px}}
+.sync{font-size:11.5px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.loading{min-height:60vh;display:grid;place-items:center;text-align:center;color:var(--muted)}
+.welcome{max-width:560px;margin:6vh auto 0;display:flex;flex-direction:column;gap:18px;align-items:flex-start}
+.welcome .emblem{width:120px;height:120px}
+.welcome p{font-family:var(--f-read);font-size:17px;line-height:1.65;color:var(--fg-2);margin:0}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+<script src="./config.js"></script>
+<script src="./vendor/supabase.js"></script>
+</head>
+<body>
+
+<canvas id="stars" aria-hidden="true"></canvas>
+<div class="app">
+  <nav class="nav" id="nav" aria-label="Secciones">
+    <div class="brand">Semilla Estelar<small>Bitácora de vida</small></div>
+  </nav>
+  <main id="main"><div class="loading"><div><h2>Semilla Estelar</h2><p>Abriendo tu bitácora…</p></div></div></main>
+</div>
+
+<script>
+/* ============ Constantes del mundo ============ */
+const DAYS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const DAYS_FULL=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const MONTHS=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const ATTRS={
+  disciplina:{name:'Disciplina',color:'#dca45a'},
+  mente:{name:'Mente',color:'#a7bde9'},
+  espiritu:{name:'Espíritu',color:'#c7a6e0'},
+  patrimonio:{name:'Patrimonio',color:'#d6c26a'},
+  carrera:{name:'Carrera',color:'#6fb3a8'},
+  cuerpo:{name:'Cuerpo',color:'#d8775f'},
+  equilibrio:{name:'Equilibrio emocional',color:'#6a9b74'}
+};
+const DIFF={facil:{name:'Fácil',xp:10,frag:1},media:{name:'Media',xp:20,frag:2},dificil:{name:'Difícil',xp:35,frag:3},epica:{name:'Épica',xp:60,frag:5}};
+const TYPES={rutina:'Rutina',habito:'Hábito',proyecto:'Proyecto'};
+const RARITY={
+  comun:{name:'Común',cost:5,words:'180 a 250',color:'#a9b4ae'},
+  raro:{name:'Raro',cost:12,words:'300 a 400',color:'#a7bde9'},
+  epico:{name:'Épico',cost:25,words:'450 a 600',color:'#c7a6e0'},
+  legendario:{name:'Legendario',cost:45,words:'650 a 850',color:'#dca45a'}
+};
+const CATS={
+  saga:{name:'Saga de Semilla Estelar',short:'Saga'},
+  superacion:{name:'Historia de superación',short:'Superación'},
+  patrimonio:{name:'Gestión patrimonial',short:'Patrimonio'},
+  espiritual:{name:'Consejo espiritual',short:'Espiritual'},
+  emocional:{name:'Regulación emocional',short:'Emocional'},
+  carrera:{name:'Consejo de carrera',short:'Carrera'}
+};
+const STAGES=[
+  {from:1,name:'Semilla',titles:['Semilla dormida','Semilla que despierta','Semilla en tierra fértil','Semilla germinante']},
+  {from:5,name:'Brote',titles:['Brote tenaz','Brote que busca la luz','Brote de dos hojas','Brote firme','Brote en ascenso']},
+  {from:10,name:'Raíz',titles:['Raíz profunda','Raíz que sostiene','Raíz entre piedras','Raíz del río','Raíz ancestral']},
+  {from:15,name:'Árbol',titles:['Árbol joven','Árbol de sombra amplia','Árbol que da fruto','Árbol de la orilla','Árbol guardián','Árbol de copa alta','Árbol sereno','Árbol de mil anillos','Árbol del bosque viejo','Árbol que llama a las estrellas']},
+  {from:25,name:'Constelación',titles:['Constelación naciente','Constelación que guía','Constelación del sur','Constelación eterna']}
+];
+const ICONS={
+  hoy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  semana:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  misiones:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 4h11l3 3v13H5z"/><path d="M9 10h6M9 14h6M9 18h3"/></svg>',
+  cofres:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M3 10a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5v9H3z"/><path d="M3 11h18M10 11v3h4v-3"/></svg>',
+  heroe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 21v-7"/><path d="M12 14c-4 0-6-3-6-6 3 0 6 2 6 6zM12 12c0-4 2-7 6-7 0 4-2 7-6 7z"/><path d="M12 3l.6 1.4L14 5l-1.4.6L12 7l-.6-1.4L10 5l1.4-.6z"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>',
+  stop:'<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  left:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  right:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg>',
+  edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
+  flame:'<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><path d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-4-1-6 1-9z"/></svg>',
+  cat_saga:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5c3-1 5-1 8 1v14c-3-2-5-2-8-1zM20 5c-3-1-5-1-8 1v14c3-2 5-2 8-1z"/></svg>',
+  cat_superacion:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 20l6-9 4 5 3-4 5 8z"/><path d="M16 6l1-3 1 3 3 1-3 1-1 3-1-3-3-1z"/></svg>',
+  cat_patrimonio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg>',
+  cat_espiritual:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3c2 4 2 8 0 12-2-4-2-8 0-12z"/><path d="M4 11c4 0 7 2 8 6-4 0-7-2-8-6zM20 11c-4 0-7 2-8 6 4 0 7-2 8-6z"/><path d="M5 20h14"/></svg>',
+  cat_emocional:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 12h3l2-5 4 10 2-5h7"/></svg>',
+  cat_carrera:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3c-3 4-3 8 0 12 3-4 3-8 0-12z"/><path d="M12 15v6M8 21h8M4 9l3 1M20 9l-3 1"/></svg>'
+};
+
+/* ============ Biblioteca original (respaldo sin IA) ============ */
+const LIBRARY={
+  saga:[
+    {id:'s1',chapter:1,title:'Prólogo: La semilla que cayó del cielo',
+     body:'La noche en que el cielo de Selvaluz se rasgó, una chispa descendió sobre la selva como una gota de oro fundido. No hizo ruido al caer. Se hundió en el barro tibio junto al Gran Río de Plata Dormida y allí quedó, latiendo.\n\nLa Abuela Ceiba, el árbol más viejo de la orilla, la sintió en sus raíces. "Has venido de muy lejos, pequeña", murmuró con una voz hecha de hojas. "Las estrellas no siembran por capricho. Si estás aquí, es porque la selva te necesita".\n\nLa semilla no entendía todavía. Solo sabía que tenía hambre de luz y que, al amanecer, algo en su interior pedía crecer. Pero río arriba, donde el agua antes cantaba, se extendía una bruma gris que apagaba los colores. Los peces huían. Las garzas ya no bajaban a beber.\n\n"Esa es la Bruma Gris", dijo la Ceiba. "Se alimenta del olvido y del descuido. Solo retrocede ante quien cultiva siete virtudes: Disciplina, Mente, Espíritu, Patrimonio, Carrera, Cuerpo y Equilibrio. Cada día que las cuides, echarás una raíz más honda".\n\nAsí recibió su nombre: Semilla Estelar. Y esa misma mañana, cuando el primer rayo tocó el barro, abrió su primera grieta.',
+     takeaway:'Toda transformación empieza con una grieta pequeña: elige hoy una sola misión y complétala.',
+     summary:'Una chispa estelar cae en la selva de Selvaluz, junto al Gran Río de Plata Dormida. La Abuela Ceiba, árbol ancestral, la nombra Semilla Estelar y le revela su misión: la Bruma Gris, que nace del olvido y el descuido, envenena el río y solo retrocede ante quien cultiva siete virtudes (Disciplina, Mente, Espíritu, Patrimonio, Carrera, Cuerpo y Equilibrio). La semilla abre su primera grieta al amanecer.'},
+    {id:'s2',chapter:2,title:'Capítulo 2: El guardián de las cuatro de la mañana',
+     body:'Antes del alba, cuando la selva aún dormía, un sonido seco despertó a Semilla Estelar. Sobre una rama baja la observaba un búho de plumas color ceniza, con ojos que parecían dos lunas pequeñas.\n\n"Me llamo Vigía", dijo. "Custodio la hora en que nadie mira. Es la hora en que se decide quién crece y quién solo sueña con crecer".\n\nLa semilla quiso volver a cerrarse. El barro estaba tibio y la oscuridad era cómoda. Pero recordó la bruma río arriba y se obligó a abrir su grieta un poco más. Vigía asintió.\n\n"La Bruma no te vencerá con un golpe", explicó el búho. "Te vencerá con pequeñas rendiciones: un día sin luz, otro sin agua, otro sin propósito. Por eso el primer poder que debes dominar es la constancia. No necesitas ser fuerte una vez. Necesitas presentarte cada mañana".\n\nEsa madrugada, la semilla extendió su primera raíz. Era delgada como un hilo, pero alcanzó una vena de agua limpia que nadie conocía. Al tocarla, sintió que algo en el río respondía: un destello, apenas un pulso, como si el agua recordara que alguna vez fue de plata.\n\nDesde lo alto, Vigía ululó. A lo lejos, la Bruma Gris se agitó por primera vez.',
+     takeaway:'La constancia vence a la intensidad: preséntate a tu primera misión de mañana aunque no tengas ganas.',
+     summary:'Semilla Estelar conoce a Vigía, un búho ceniza que custodia la hora antes del alba y le enseña que la Bruma Gris vence con pequeñas rendiciones, no con golpes; el primer poder es la constancia. La semilla extiende su primera raíz, encuentra una vena de agua limpia oculta y el río responde con un destello de plata. La Bruma Gris se agita por primera vez.'},
+    {id:'s3',chapter:3,title:'Capítulo 3: La moneda de barro',
+     body:'Con la primera raíz llegó el primer visitante interesado. Un comerciante de la selva, una guagua de pelaje lustroso llamada Doña Ternera, apareció cargando un saco de semillas brillantes.\n\n"Te vendo luz embotellada", ofreció. "Crecerás en un día lo que otros crecen en un año. Solo cuesta toda el agua que guardaste".\n\nSemilla Estelar dudó. Crecer rápido era tentador. Pero la Abuela Ceiba, desde la orilla, dejó caer una hoja seca que giró lentamente hasta posarse frente a ella. En la hoja había una mancha gris.\n\n"Las semillas que crecen con luz prestada", dijo la Ceiba, "se secan cuando la luz se acaba. Guarda tu agua. Gasta solo una parte, protege otra para la sequía y siembra el resto donde pueda multiplicarse. Así se forma el bosque".\n\nLa semilla rechazó la oferta. Doña Ternera se marchó encogiéndose de hombros, y cuando pasó junto a la bruma, sus semillas brillantes se volvieron polvo gris.\n\nEsa noche, la semilla dividió su agua en tres pozos pequeños. Por la mañana descubrió que el tercero, el que había sembrado, había hecho brotar un musgo verde a su alrededor. Era poco. Pero era suyo.',
+     takeaway:'Antes de gastar, separa tres partes: lo que usas, lo que proteges y lo que siembras para el futuro.',
+     summary:'Doña Ternera, comerciante de la selva, ofrece a Semilla Estelar "luz embotellada" para crecer rápido a cambio de toda su agua. La Abuela Ceiba advierte que lo prestado se seca y le enseña a dividir sus recursos en tres pozos: uso, reserva y siembra. La semilla rechaza la oferta; las semillas falsas se vuelven polvo gris al pasar junto a la Bruma. El pozo sembrado hace brotar musgo verde: el primer fruto de su paciencia.'}
+  ],
+  superacion:[
+    {id:'u1',title:'El puente de los cien días',body:'Mariela vivía al otro lado del río, en una vereda donde el colegio quedaba a dos horas de camino. A los quince años decidió que sería ingeniera, aunque nadie en su familia había terminado el bachillerato.\n\nNo tenía computador ni libros nuevos. Tenía un cuaderno y una regla: estudiar una hora antes de que amaneciera, todos los días, durante cien días seguidos. Si fallaba, volvía a contar desde uno.\n\nFalló el día veintitrés, por una fiebre. Falló el cincuenta y uno, por cansancio. Cada vez sintió vergüenza, y cada vez volvió a escribir el número uno en la primera página. Lo que nadie veía era que, aunque el contador se reiniciaba, lo aprendido no se borraba.\n\nAl tercer intento llegó a cien. Para entonces ya no necesitaba la regla: estudiar se había vuelto parte de quién era. Años después, cuando le preguntaron cuál había sido su secreto, respondió que no fue el talento. Fue aceptar que empezar de nuevo no es lo mismo que empezar de cero.',
+     takeaway:'Si rompes una racha, no empiezas de cero: empiezas con todo lo que ya aprendiste. Vuelve hoy.'},
+    {id:'u2',title:'Las manos del carpintero',body:'Tomás perdió su trabajo en la fábrica a los cuarenta y dos años. Durante semanas se sentó frente a la ventana sin saber qué hacer con sus manos, que solo conocían la rutina de una máquina.\n\nUna tarde, su hija le pidió ayuda para arreglar una silla rota. Tomás no sabía de carpintería, pero se quedó toda la noche lijando, midiendo y equivocándose. Al amanecer, la silla estaba torcida, pero se sostenía.\n\nEse pequeño logro lo empujó a reparar otra cosa, y luego otra. Vio tutoriales, preguntó a un vecino, compró herramientas usadas. Llevaba una libreta donde anotaba cada error y lo que aprendía de él.\n\nAl año tenía un taller pequeño en el patio. No se volvió rico, pero recuperó algo más difícil de medir: la sensación de que su vida volvía a tener forma. Decía que la silla torcida seguía en su sala para recordarle que todo maestro fue primero un principiante que se atrevió a hacerlo mal.',
+     takeaway:'Haz hoy una versión imperfecta de lo que estás postergando; la perfección llega con la práctica, no antes.'}
+  ],
+  patrimonio:[
+    {id:'p1',title:'Págate primero',body:'Una de las ideas más útiles en finanzas personales es separar el ahorro antes de gastar, no con lo que sobra al final del mes. Cuando el ahorro depende de lo que sobra, casi nunca sobra nada.\n\nFunciona así: el día que recibes dinero, sea mesada, beca, sueldo o un trabajo ocasional, apartas de inmediato un porcentaje fijo, aunque sea pequeño. Puede ser el 5 % o el 10 %. Lo importante no es la cifra inicial, sino que el hábito sea automático.\n\nUna forma práctica es tener una cuenta o un bolsillo digital distinto al que usas para tus gastos diarios. Si el dinero no está a la vista, es menos tentador gastarlo.\n\nCon el tiempo, ese fondo cumple una primera función: protegerte de imprevistos. La recomendación más común es construir poco a poco un fondo de emergencia equivalente a varios meses de gastos básicos. Solo cuando ese colchón exista tiene sentido pensar en inversiones con más riesgo.',
+     takeaway:'Decide hoy qué porcentaje de tu próximo ingreso apartarás primero, y escríbelo.'},
+    {id:'p2',title:'El mapa de tus gastos',body:'No puedes administrar lo que no ves. Antes de hacer un presupuesto ideal, conviene saber a dónde se va realmente tu dinero.\n\nDurante dos semanas, anota cada gasto, por pequeño que sea: transporte, comida, recargas, salidas. No lo juzgues todavía; solo regístralo. Al final, agrúpalo en categorías: necesidades, gustos y metas.\n\nMuchas personas descubren gastos pequeños y repetidos que suman más de lo que imaginaban. Ese hallazgo no es para sentir culpa, sino para decidir con información. Quizá un gusto vale la pena y otro no.\n\nUna guía popular es destinar aproximadamente la mitad del ingreso a necesidades, una parte a gustos y otra al ahorro. Es una referencia, no una ley: tu situación real decide los porcentajes. Esto es contenido educativo; para decisiones importantes, consulta a un asesor financiero.',
+     takeaway:'Empieza hoy a anotar cada gasto durante 14 días, sin juzgarlo.'}
+  ],
+  espiritual:[
+    {id:'e1',title:'El minuto del umbral',body:'Las tradiciones contemplativas de muchas culturas coinciden en algo sencillo: los momentos de transición son puertas. El paso de la noche al día, de una tarea a otra, de la calle a la casa.\n\nPrueba esta práctica: antes de empezar cada actividad importante, detente un minuto en el umbral. Respira tres veces con calma. Pregúntate en silencio: ¿para qué hago esto? ¿Qué quiero ofrecer en este momento?\n\nNo necesitas creer en nada en particular para practicarlo. Se trata de atención y de intención. Al hacerlo, lo cotidiano deja de ser automático y se vuelve elegido.\n\nCon el tiempo notarás que tu día ya no es una cadena de obligaciones, sino una serie de pequeños actos con sentido.',
+     takeaway:'Antes de tu próxima misión, detente un minuto en el umbral y nombra para qué la haces.'},
+    {id:'e2',title:'Gratitud concreta',body:'Agradecer de forma genérica pierde fuerza rápido. Agradecer con detalle, en cambio, entrena la mirada para encontrar lo valioso en lo pequeño.\n\nAl final del día, escribe tres cosas por las que estás agradecido, pero sé específico. No "mi familia", sino "la conversación de diez minutos con mi abuelo en la cena". No "la comida", sino "el plátano maduro que estaba en su punto".\n\nLa especificidad te obliga a revivir el momento y a notar matices que, de otra forma, se pierden. Es una práctica antigua que hoy también usan muchos programas de bienestar.\n\nHazla durante una semana y observa si cambia la forma en que recorres tus días.',
+     takeaway:'Esta noche escribe tres agradecimientos con detalles concretos.'}
+  ],
+  emocional:[
+    {id:'m1',title:'Nombrar para domar',body:'Cuando una emoción intensa aparece, el primer impulso suele ser reaccionar o reprimirla. Existe una alternativa simple y útil: ponerle nombre.\n\nDetente y di, en voz baja o por escrito: "Estoy sintiendo frustración" o "Esto es ansiedad". Intenta ser preciso. No es lo mismo enojo que decepción, ni miedo que incertidumbre.\n\nNombrar una emoción crea una pequeña distancia entre tú y lo que sientes. Ya no eres la emoción; eres alguien que la observa. Desde ahí es más fácil decidir qué hacer.\n\nDespués pregúntate: ¿qué necesito ahora? A veces es descanso, a veces hablar con alguien, a veces simplemente terminar la tarea con la emoción presente. Si una emoción difícil se vuelve constante o abrumadora, buscar apoyo profesional es un acto de fortaleza.',
+     takeaway:'La próxima vez que sientas algo intenso, nómbralo con una palabra precisa antes de actuar.'},
+    {id:'m2',title:'La respiración cuadrada',body:'La respiración es una de las pocas funciones automáticas del cuerpo que también podemos controlar a voluntad. Por eso es una herramienta inmediata para recuperar la calma.\n\nLa respiración cuadrada tiene cuatro tiempos iguales: inhala contando hasta cuatro, sostén el aire contando hasta cuatro, exhala contando hasta cuatro y espera con los pulmones vacíos contando hasta cuatro. Repite el ciclo de cuatro a seis veces.\n\nPuedes hacerla antes de un examen, una exposición o una conversación difícil. Nadie notará que la estás practicando.\n\nSi contar hasta cuatro se siente incómodo, empieza con tres. Lo importante es el ritmo parejo, no la cifra exacta.',
+     takeaway:'Practica hoy cuatro ciclos de respiración cuadrada antes de tu clase o tarea más exigente.'}
+  ],
+  carrera:[
+    {id:'c1',title:'Tu portafolio de evidencias',body:'En Ingeniería Ambiental, como en el análisis de datos, lo que más convence a un empleador o a un jurado no es la lista de cursos, sino la evidencia de lo que sabes hacer.\n\nEmpieza un portafolio desde ahora. Cada trabajo de clase con datos reales, cada informe técnico, cada mapa o tablero que construyas puede convertirse en una pieza. Escribe para cada uno un resumen breve: el problema, los datos, el método y el resultado.\n\nSi combinas tu formación ambiental con herramientas de análisis de datos, tienes una ventaja: puedes convertir mediciones de calidad del agua, del aire o de residuos en información que ayude a tomar decisiones.\n\nUn portafolio no se construye en una semana. Se construye agregando una pieza cada vez que terminas algo que vale la pena mostrar.',
+     takeaway:'Elige un trabajo que ya terminaste y escribe su resumen de cinco líneas: problema, datos, método, resultado y aprendizaje.'},
+    {id:'c2',title:'Pregunta como ingeniero',body:'Una habilidad que distingue a los buenos profesionales es la calidad de sus preguntas. En clase, en campo o frente a un conjunto de datos, preguntar bien ahorra semanas de trabajo.\n\nAntes de resolver un problema, intenta formular tres preguntas: ¿qué decisión se tomará con este resultado? ¿Qué datos necesito y cuáles tengo realmente? ¿Cómo sabré si mi respuesta es confiable?\n\nEstas preguntas sirven igual para diseñar un sistema de tratamiento de agua que para analizar una base de datos. Te obligan a pensar en el propósito, los insumos y la validación.\n\nLlévalas a tu próxima clase y úsalas al menos una vez. Notarás que tus profesores empiezan a verte de otra manera.',
+     takeaway:'En tu próxima clase, haz una pregunta que conecte el tema con una decisión real.'}
+  ]
+};
+
+/* ============ Misiones iniciales ============ */
+function defaultMissions(){
+  const today=dk(new Date());
+  const m=(id,o)=>Object.assign({id,created:today,active:true,deadline:'',milestones:[],tag:''},o);
+  const days=(arr,start,dur)=>arr.map(d=>({day:d,start,dur}));
+  const classDesc=n=>`Clase universitaria de ${n}.\n\nAntes: llega 10 minutos antes y repasa los apuntes de la sesión anterior.\nDurante: toma notas activas y anota al menos una pregunta.\nDespués: escribe en tres líneas lo más importante que aprendiste.`;
+  return [
+    m('c-dstap',{type:'rutina',tag:'clase',title:'Diseño de Sistemas de Tratamiento de Agua Potable',desc:classDesc('Diseño de Sistemas de Tratamiento de Agua Potable'),attr:'carrera',diff:'media',slots:[{day:1,start:'14:00',dur:120},{day:3,start:'16:00',dur:120}]}),
+    m('c-antep',{type:'rutina',tag:'clase',title:'Anteproyecto (clase)',desc:classDesc('Anteproyecto')+'\n\nLleva siempre el avance de la semana para recibir retroalimentación.',attr:'carrera',diff:'media',slots:[{day:1,start:'16:00',dur:120}]}),
+    m('c-acued',{type:'rutina',tag:'clase',title:'Acueducto y Alcantarillado',desc:classDesc('Acueducto y Alcantarillado')+'\n\nEl jueves se cruza con Estudio de Impacto Ambiental; ambas cuentan como misiones independientes.',attr:'carrera',diff:'media',slots:[{day:2,start:'14:00',dur:120},{day:4,start:'16:00',dur:120}]}),
+    m('c-eia',{type:'rutina',tag:'clase',title:'Estudio de Impacto Ambiental',desc:classDesc('Estudio de Impacto Ambiental')+'\n\nEl jueves se cruza con Acueducto y Alcantarillado; ambas cuentan como misiones independientes.',attr:'carrera',diff:'media',slots:[{day:2,start:'16:00',dur:120},{day:4,start:'16:00',dur:120}]}),
+    m('c-fep',{type:'rutina',tag:'clase',title:'Formulación y Evaluación de Proyectos',desc:classDesc('Formulación y Evaluación de Proyectos'),attr:'carrera',diff:'media',slots:[{day:4,start:'13:00',dur:180}]}),
+    m('h-despertar',{type:'habito',title:'Levantarme a las 4:00 a. m.',desc:'Levántate al primer sonido de la alarma, sin posponerla.\n\nConsejo: deja la alarma lejos de la cama y un vaso de agua listo. Los primeros cinco minutos deciden el resto de la mañana.',attr:'disciplina',diff:'media',remind:0,slots:days([0,1,2,3,4,5,6],'04:00',0)}),
+    m('h-meditar',{type:'habito',title:'Meditar',desc:'Siéntate con la espalda recta en un lugar tranquilo.\n\n1. Cierra los ojos y respira de forma natural.\n2. Lleva la atención a la respiración.\n3. Cuando la mente se distraiga, nota el pensamiento y regresa sin juzgarte.\n\nEmpieza con 10 a 15 minutos.',attr:'espiritu',diff:'facil',slots:days([0,1,2,3,4,5,6],'04:15',15)}),
+    m('h-ejercicio',{type:'habito',title:'Ejercicio',desc:'Entrenamiento de seis días a la semana; el domingo es tu día de descanso.\n\nIncluye calentamiento de 5 a 10 minutos, la sesión principal y estiramiento al final. Registra en la descripción tu rutina de cada día si quieres llevar el detalle.',attr:'cuerpo',diff:'dificil',slots:days([1,2,3,4,5,6],'05:00',60)}),
+    m('h-datos',{type:'habito',title:'Estudiar análisis de datos',desc:'Bloque de estudio enfocado, sin celular.\n\nDefine antes de empezar qué vas a aprender hoy (un concepto, un ejercicio o un pedazo de proyecto) y al terminar anota qué lograste.',attr:'mente',diff:'media',slots:days([1,2,3,4,5,6],'06:30',60)}),
+    m('h-dormir',{type:'habito',title:'Dormir a las 10:00 p. m.',desc:'Prepárate para dormir desde las 9:30 p. m.: pantallas fuera, luces bajas y la ropa del día siguiente lista.\n\nMárcala completada cuando te acuestes a tiempo.',attr:'disciplina',diff:'media',remind:30,slots:days([0,1,2,3,4,5,6],'22:00',0)}),
+    m('p-antep',{type:'proyecto',title:'Avanzar el anteproyecto de grado',desc:'Sesiones de trabajo profundo para avanzar el documento del anteproyecto.\n\nAl empezar cada sesión, elige un solo entregable. Al terminar, marca el avance en los hitos.\n\nLos hitos son una guía inicial: edítalos para que reflejen tu cronograma real.',attr:'carrera',diff:'epica',slots:[{day:3,start:'08:00',dur:120},{day:5,start:'08:00',dur:180}],
+      milestones:[{id:'mi1',title:'Planteamiento del problema y justificación',done:false},{id:'mi2',title:'Objetivos general y específicos',done:false},{id:'mi3',title:'Marco teórico y estado del arte',done:false},{id:'mi4',title:'Metodología',done:false},{id:'mi5',title:'Cronograma y presupuesto',done:false},{id:'mi6',title:'Revisión con el director',done:false}]})
+  ];
+}
+
+/* ============ Utilidades ============ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone=o=>JSON.parse(JSON.stringify(o));
+const uid=(p='id')=>p+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
+function dk(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function parseDk(s){const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+function mondayOf(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());const w=(x.getDay()+6)%7;return addDays(x,-w)}
+function fmtTime(t){if(!t)return'';const [h,m]=t.split(':').map(Number);const ap=h<12?'a. m.':'p. m.';const hh=h%12||12;return hh+':'+String(m).padStart(2,'0')+' '+ap}
+function toMin(t){if(!t)return 0;const [h,m]=t.split(':').map(Number);return h*60+m}
+function fmtDur(n){n=+n||0;if(!n)return'';if(n<60)return n+' min';const h=Math.floor(n/60),m=n%60;return h+' h'+(m?' '+m+' min':'')}
+function fmtDate(d){return d.getDate()+' '+MONTHS[d.getMonth()]}
+function fmtClock(ms){const s=Math.max(0,Math.floor(ms/1000));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),ss=s%60;return (h?h+':':'')+String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0')}
+function levelFromXp(xp){let L=1;while(60*L*(L+1)<=xp)L++;return L}
+function xpFor(L){return 60*(L-1)*L}
+function stageOf(L){let s=STAGES[0];for(const st of STAGES)if(L>=st.from)s=st;return s}
+function titleOf(L){const s=stageOf(L);const i=Math.min(L-s.from,s.titles.length-1);return s.titles[i]}
+function attrLevel(x){return Math.floor(Math.sqrt((x||0)/25))+1}
+function attrProg(x){const l=attrLevel(x);const a=25*(l-1)**2,b=25*l**2;return (x-a)/(b-a)}
+
+/* ============ Estado ============ */
+let S=null;              // estado del jugador
+let REWARDS=[];          // recompensas (grimorio)
+let VIEW='hoy';
+let UI={weekOffset:0,mfilter:'todas',gfilter:'todas',rarity:null,cat:'saga',expanded:{},busy:false};
+let tickT=null;
+
+function blankState(){
+  return {kind:'state',v:1,name:'Semilla Estelar',player:'Juan Camilo',xp:0,frag:0,attrs:Object.fromEntries(Object.keys(ATTRS).map(k=>[k,0])),
+    missions:[],log:{},bonus:{},timer:null,saga:{chapter:0,summary:'',lastTitle:''},libUsed:[],localRewards:[],started:dk(new Date()),settings:Object.assign({},DEFAULT_SETTINGS)};
+}
+
+/* ============ Almacenamiento: Supabase + copia local ============ */
+const DEFAULT_SETTINGS={remindersOn:true,defaultRemind:10,quietStart:'',quietEnd:'',summaryOn:true,summaryTime:'21:00'};
+const Store={mode:'cloud',sb:null,user:null,dirty:false,timer:null,chain:Promise.resolve(),
+  LK(){return 'semilla-cache-'+(this.user?this.user.id:'x')},
+  cacheWrite(){try{localStorage.setItem(this.LK(),JSON.stringify({S,REWARDS,dirty:this.dirty}))}catch(e){}},
+  cacheRead(){try{return JSON.parse(localStorage.getItem(this.LK())||'null')}catch(e){return null}},
+  save(){
+    if(!S)return;
+    S.updatedAt=Date.now();this.dirty=true;this.cacheWrite();
+    clearTimeout(this.timer);this.timer=setTimeout(()=>this.flush(),500);
+  },
+  flush(){
+    this.chain=this.chain.then(async()=>{
+      if(!this.dirty||!S||!this.user)return;
+      if(!navigator.onLine){setSync('offline');return}
+      const snap=clone(S);
+      const {error}=await this.sb.from('player_state').upsert({user_id:this.user.id,state:snap,updated_at:new Date().toISOString()});
+      if(error){setSync('err',error);return}
+      if(S&&S.updatedAt===snap.updatedAt)this.dirty=false;
+      this.cacheWrite();setSync('ok');
+    }).catch(e=>setSync('err',e));
+    return this.chain;
+  },
+  async pull(){
+    const [st,rw]=await Promise.all([
+      this.sb.from('player_state').select('state').eq('user_id',this.user.id).maybeSingle(),
+      this.sb.from('rewards').select('data').eq('user_id',this.user.id).order('created_at',{ascending:false}).limit(500)
+    ]);
+    if(st.error)throw st.error;
+    if(!rw.error&&rw.data)REWARDS=rw.data.map(r=>r.data);
+    const server=st.data?st.data.state:null;
+    if(this.dirty&&S&&(!server||(S.updatedAt||0)>=(server.updatedAt||0))){await this.flush()}
+    else{S=server?normalize(server):null;this.dirty=false}
+    this.cacheWrite();setSync('ok');
+  },
+  async addReward(r){
+    REWARDS=[r,...REWARDS.filter(x=>x.id!==r.id)];this.cacheWrite();
+    const {error}=await this.sb.from('rewards').upsert({id:r.id,user_id:this.user.id,data:r});
+    if(error){REWARDS=REWARDS.filter(x=>x.id!==r.id);this.cacheWrite();throw error}
+  }
+};
+let syncState='ok';
+function setSync(s,e){
+  if(s==='err'&&syncState!=='err')toast('No se pudo guardar en la nube. Se reintentará al reconectar.');
+  syncState=s;
+  const el=$('#syncline');if(el)el.innerHTML=syncHtml();
+}
+function syncHtml(){
+  if(syncState==='offline')return '<span class="dot" style="background:var(--amber)"></span>Sin conexión: se guardará al volver';
+  if(syncState==='err')return '<span class="dot" style="background:var(--danger)"></span>Error al guardar';
+  return '<span class="dot" style="background:var(--forest)"></span>Sincronizado entre tus dispositivos';
+}
+
+/* ============ Arranque, sesión y notificaciones ============ */
+const PUSH={supported:false,subscribed:false,perm:'default'};
+function configReady(){return window.SUPABASE_URL&&!/TU-PROYECTO/.test(SUPABASE_URL)&&window.SUPABASE_ANON_KEY&&!/TU-CLAVE/.test(SUPABASE_ANON_KEY)}
+async function boot(){
+  if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    navigator.serviceWorker.addEventListener('message',e=>{const d=e.data||{};if(d.type==='complete')completeFromNotification(d.mid,d.day)})}
+  if(!configReady()){$('#main').innerHTML=`<div class="welcome"><h1>Falta configurar</h1><p>Edita el archivo config.js con la URL y la clave pública de tu proyecto de Supabase. La guía del README explica cómo.</p></div>`;return}
+  Store.sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  Store.sb.auth.onAuthStateChange((ev,session)=>{if(ev==='SIGNED_OUT'){S=null;REWARDS=[];Store.user=null;renderAuth()}});
+  const {data}=await Store.sb.auth.getSession();
+  if(data&&data.session)await startSession(data.session.user);else renderAuth();
+  addEventListener('online',()=>{setSync('ok');Store.flush()});
+  addEventListener('offline',()=>setSync('offline'));
+  document.addEventListener('visibilitychange',async()=>{
+    if(document.hidden){Store.flush();return}
+    if(!Store.user)return;
+    try{await Store.pull()}catch(e){}
+    await handleUrlAction();softRender();
+  });
+}
+async function startSession(user){
+  Store.user=user;
+  const c=Store.cacheRead();
+  if(c){S=c.S?normalize(c.S):null;REWARDS=c.REWARDS||[];Store.dirty=!!c.dirty;render()}
+  else $('#main').innerHTML='<div class="loading"><div><h2>Semilla Estelar</h2><p>Abriendo tu bitácora…</p></div></div>';
+  try{await Store.pull()}catch(e){setSync(navigator.onLine?'err':'offline')}
+  await handleUrlAction();
+  render();
+  refreshPushStatus();
+}
+async function handleUrlAction(){
+  const q=new URLSearchParams(location.search);const mid=q.get('complete'),day=q.get('day');
+  if(!mid)return;
+  history.replaceState(null,'',location.pathname);
+  completeFromNotification(mid,day);
+}
+function completeFromNotification(mid,day){
+  if(!S)return;const m=S.missions.find(x=>x.id===mid);if(!m)return;
+  const key=day||dk(new Date());
+  if(isDone(mid,key)){toast('"'+m.title+'" ya estaba completada');return}
+  VIEW='hoy';toggleDone(mid,key);
+}
+function renderAuth(){
+  renderNav();
+  $('#main').innerHTML=`<div class="welcome">
+    <div class="emblem">${emblemSvg(1)}</div>
+    <span class="eyebrow">Bitácora de vida</span>
+    <h1 style="font-size:40px">Semilla Estelar</h1>
+    <form class="stack" id="authform" style="width:100%;max-width:380px" novalidate>
+      <div class="field"><label for="a-email">Correo</label><input class="inp" id="a-email" type="email" autocomplete="email" required></div>
+      <div class="field"><label for="a-pass">Contraseña</label><input class="inp" id="a-pass" type="password" autocomplete="current-password" minlength="6" required></div>
+      <p class="muted" id="a-msg" hidden></p>
+      <div class="row"><button class="btn primary" type="submit" id="a-in">Entrar</button><button class="btn ghost" type="button" id="a-up">Crear cuenta</button></div>
+    </form>
+  </div>`;
+  const msg=t=>{const el=$('#a-msg');el.textContent=t;el.hidden=!t};
+  const vals=()=>({email:$('#a-email').value.trim(),password:$('#a-pass').value});
+  const tr=e=>{const m=(e&&e.message)||'';if(/Invalid login/i.test(m))return 'Correo o contraseña incorrectos.';if(/not confirmed/i.test(m))return 'Primero confirma tu correo con el enlace que te enviamos.';if(/already registered/i.test(m))return 'Ese correo ya tiene cuenta. Usa "Entrar".';if(/Password should/i.test(m))return 'La contraseña debe tener al menos 6 caracteres.';if(/signups not allowed/i.test(m))return 'El registro de cuentas nuevas está cerrado.';return m||'No se pudo completar. Revisa tu conexión.'};
+  $('#authform').onsubmit=async e=>{e.preventDefault();const v=vals();if(!v.email||!v.password){msg('Escribe tu correo y tu contraseña.');return}
+    msg('Entrando…');const {data,error}=await Store.sb.auth.signInWithPassword(v);if(error){msg(tr(error));return}msg('');startSession(data.user)};
+  $('#a-up').onclick=async()=>{const v=vals();if(!v.email||v.password.length<6){msg('Escribe tu correo y una contraseña de al menos 6 caracteres.');return}
+    msg('Creando cuenta…');const {data,error}=await Store.sb.auth.signUp({...v,options:{emailRedirectTo:location.origin+location.pathname}});
+    if(error){msg(tr(error));return}
+    if(data.session)startSession(data.user);else msg('Listo. Revisa tu correo, toca el enlace de confirmación y luego vuelve aquí y toca "Entrar".')};
+}
+function b64uToU8(s){const p='='.repeat((4-s.length%4)%4);const b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(b,c=>c.charCodeAt(0))}
+async function refreshPushStatus(){
+  PUSH.supported='serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
+  if(!PUSH.supported)return;
+  PUSH.perm=Notification.permission;
+  try{const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();PUSH.subscribed=!!sub;
+    if(sub&&Store.user){const j=sub.toJSON();await Store.sb.from('push_subscriptions').upsert({endpoint:j.endpoint,user_id:Store.user.id,subscription:j,device:navigator.userAgent.slice(0,180)})}}catch(e){}
+  if(VIEW==='heroe')softRender();
+}
+async function enablePush(){
+  if(!PUSH.supported){toast('Este navegador no admite notificaciones. Usa Chrome en Android.');return}
+  if(!window.VAPID_PUBLIC_KEY||/TU-CLAVE/.test(VAPID_PUBLIC_KEY)){toast('Falta la clave VAPID pública en config.js');return}
+  const perm=await Notification.requestPermission();PUSH.perm=perm;
+  if(perm!=='granted'){toast('Permiso denegado. Actívalo en los ajustes del sitio en Chrome.');softRender();return}
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64uToU8(VAPID_PUBLIC_KEY)});
+    const j=sub.toJSON();
+    const {error}=await Store.sb.from('push_subscriptions').upsert({endpoint:j.endpoint,user_id:Store.user.id,subscription:j,device:navigator.userAgent.slice(0,180)});
+    if(error)throw error;
+    PUSH.subscribed=true;toast('Notificaciones activadas en este dispositivo');
+  }catch(e){toast('No se pudo activar: '+((e&&e.message)||'error desconocido'))}
+  softRender();
+}
+async function disablePush(){
+  try{const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();
+    if(sub){await Store.sb.from('push_subscriptions').delete().eq('endpoint',sub.endpoint);await sub.unsubscribe()}}catch(e){}
+  PUSH.subscribed=false;toast('Notificaciones desactivadas en este dispositivo');softRender();
+}
+async function testPush(){
+  const {error}=await Store.sb.from('snoozes').insert({user_id:Store.user.id,title:'Prueba de Semilla Estelar',body:'Si ves esto, tus recordatorios funcionan.',fire_at:new Date().toISOString()});
+  toast(error?'No se pudo programar la prueba: '+error.message:'Prueba programada: llegará en menos de un minuto');
+}
+async function importBackup(file){
+  let j;try{j=JSON.parse(await file.text())}catch(e){toast('El archivo no es un respaldo válido');return}
+  const st=j&&j.state?j.state:(j&&j.missions?j:null);const rw=Array.isArray(j&&j.rewards)?j.rewards:[];
+  if(!st||!Array.isArray(st.missions)){toast('El archivo no es un respaldo de Semilla Estelar');return}
+  const L=levelFromXp(st.xp||0);
+  openModal(`<div class="modal-head"><h2>Importar respaldo</h2><button class="icon-btn" data-close aria-label="Cerrar">${ICONS.x}</button></div>
+    <div class="stack"><p style="margin:0">Respaldo de <b>nivel ${L}</b> con <b>${st.missions.length}</b> misiones y <b>${rw.length}</b> recompensas.</p>
+    <div class="confirm-box">Reemplazará el progreso que tienes ahora en esta cuenta.</div>
+    <div class="row" style="justify-content:flex-end"><button class="btn ghost" data-close>Cancelar</button><button class="btn primary" id="impyes">Importar</button></div></div>`,(md,close)=>{
+    md.querySelector('#impyes').onclick=async()=>{
+      md.querySelector('#impyes').disabled=true;md.querySelector('#impyes').textContent='Importando…';
+      S=normalize(clone(st));delete S.localRewards;S.localRewards=[];
+      Store.save();await Store.flush();
+      for(let i=0;i<rw.length;i+=100){const chunk=rw.slice(i,i+100).filter(r=>r&&r.id).map(r=>({id:r.id,user_id:Store.user.id,data:r}));
+        if(chunk.length){const {error}=await Store.sb.from('rewards').upsert(chunk);if(error){toast('Algunas recompensas no se importaron: '+error.message);break}}}
+      REWARDS=rw.filter(r=>r&&r.id).sort((a,b)=>b.at-a.at);Store.cacheWrite();
+      close();VIEW='hoy';render();toast('Respaldo importado');
+    };
+  });
+}
+function normalize(d){
+  const b=blankState();
+  for(const k in b)if(d[k]===undefined)d[k]=b[k];
+  for(const a in ATTRS)if(d.attrs[a]===undefined)d.attrs[a]=0;
+  d.settings=Object.assign({},DEFAULT_SETTINGS,d.settings||{});
+  return d;
+}
+
+/* ============ Lógica de misiones ============ */
+function slotsOn(m,date){
+  if(!m.active)return[];
+  const key=dk(date),wd=date.getDay();
+  if(m.created&&key<m.created&&!(m.slots||[]).some(s=>s.date===key))return[];
+  return (m.slots||[]).filter(s=>s.date?s.date===key:s.day===wd);
+}
+function agendaFor(date){
+  const items=[];
+  for(const m of S.missions){for(const s of slotsOn(m,date))items.push({m,s})}
+  items.sort((a,b)=>toMin(a.s.start)-toMin(b.s.start));
+  // cruces
+  for(let i=0;i<items.length;i++){
+    const a=items[i],as=toMin(a.s.start),ae=as+(+a.s.dur||0);
+    for(let j=0;j<items.length;j++){if(i===j)continue;const b=items[j],bs=toMin(b.s.start),be=bs+(+b.s.dur||0);
+      if((+a.s.dur)&&(+b.s.dur)&&as<be&&bs<ae)a.clash=true}
+  }
+  // una entrada por misión por día
+  const seen=new Set();return items.filter(it=>{if(seen.has(it.m.id))return false;seen.add(it.m.id);return true});
+}
+function isDone(mid,key){return !!(S.log[key]&&S.log[key][mid])}
+function streakOf(m){
+  if(m.type!=='habito')return null;
+  const today=new Date();let d=parseDk(m.created||S.started);
+  const lim=addDays(today,-365);if(d<lim)d=lim;
+  let s=0,best=0;const tk=dk(today);
+  while(dk(d)<=tk){
+    if(slotsOn(m,d).length){const k=dk(d);
+      if(isDone(m.id,k)){s++;best=Math.max(best,s)}
+      else if(k<tk){s=Math.floor(s/2)}
+    }
+    d=addDays(d,1);
+  }
+  return {cur:s,best};
+}
+function dayRatio(date){const a=agendaFor(date);if(!a.length)return null;const k=dk(date);return a.filter(it=>isDone(it.m.id,k)).length/a.length}
+
+function award(xp,frag,attr){S.xp=Math.max(0,S.xp+xp);S.frag=Math.max(0,S.frag+frag);if(attr)S.attrs[attr]=Math.max(0,(S.attrs[attr]||0)+xp)}
+
+function toggleDone(mid,key){
+  const m=S.missions.find(x=>x.id===mid);if(!m)return;
+  const before=levelFromXp(S.xp);
+  S.log[key]=S.log[key]||{};
+  if(S.log[key][mid]){
+    const e=S.log[key][mid];award(-(e.xp||0),-(e.frag||0),m.attr);delete S.log[key][mid];
+    if(!Object.keys(S.log[key]).length)delete S.log[key];
+    toast('Misión desmarcada');
+  }else{
+    const d=DIFF[m.diff]||DIFF.media;let min=0;
+    if(S.timer&&S.timer.mid===mid){min=Math.round((Date.now()-S.timer.at)/60000);S.timer=null}
+    S.log[key][mid]={at:Date.now(),xp:d.xp,frag:d.frag,min};
+    award(d.xp,d.frag,m.attr);
+    toast(`+${d.xp} XP · +${d.frag} fragmento${d.frag>1?'s':''} · ${ATTRS[m.attr].name}`);
+  }
+  checkBonuses(parseDk(key));
+  pruneLog();
+  Store.save();
+  const after=levelFromXp(S.xp);
+  softRender();
+  if(after>before)showLevelUp(after);
+}
+function checkBonuses(date){
+  const key=dk(date);
+  // día completo
+  const ag=agendaFor(date);const all=ag.length&&ag.every(it=>isDone(it.m.id,key));
+  const bk='d:'+key;
+  if(all&&!S.bonus[bk]){S.bonus[bk]={xp:15,frag:3};award(15,3);setTimeout(()=>toast('¡Día completo! +15 XP · +3 fragmentos'),900)}
+  else if(!all&&S.bonus[bk]){award(-S.bonus[bk].xp,-S.bonus[bk].frag);delete S.bonus[bk]}
+  // semana de asistencia perfecta
+  const mon=mondayOf(date);let total=0,done=0;
+  for(let i=0;i<7;i++){const d=addDays(mon,i),k=dk(d);for(const it of agendaFor(d)){if(it.m.tag==='clase'){total++;if(isDone(it.m.id,k))done++}}}
+  const wk='w:'+dk(mon);
+  if(total&&done===total&&!S.bonus[wk]){S.bonus[wk]={xp:50,frag:5};award(50,5);setTimeout(()=>toast('Asistencia perfecta esta semana: +50 XP · +5 fragmentos'),1500)}
+  else if(done<total&&S.bonus[wk]){award(-S.bonus[wk].xp,-S.bonus[wk].frag);delete S.bonus[wk]}
+}
+function pruneLog(){const lim=dk(addDays(new Date(),-400));for(const k in S.log)if(k<lim)delete S.log[k];for(const k in S.bonus){const d=k.slice(2);if(d<lim)delete S.bonus[k]}}
+
+function toggleTimer(mid){
+  if(S.timer&&S.timer.mid===mid){const min=Math.round((Date.now()-S.timer.at)/60000);S.timer=null;toast('Temporizador detenido: '+(min||'<1')+' min');}
+  else{S.timer={mid,at:Date.now()};toast('Temporizador iniciado')}
+  Store.save();softRender();
+}
+function toggleMilestone(mid,miId){
+  const m=S.missions.find(x=>x.id===mid);if(!m)return;const mi=m.milestones.find(x=>x.id===miId);if(!mi)return;
+  const before=levelFromXp(S.xp);
+  if(mi.done){award(-(mi.xp||0),-(mi.frag||0),m.attr);mi.done=false;delete mi.xp;delete mi.frag;delete mi.at}
+  else{const d=DIFF[m.diff]||DIFF.media;const xp=Math.round(d.xp*1.5),fr=d.frag+1;mi.done=true;mi.xp=xp;mi.frag=fr;mi.at=Date.now();award(xp,fr,m.attr);toast(`Hito logrado: +${xp} XP · +${fr} fragmentos`)}
+  Store.save();softRender();
+  const after=levelFromXp(S.xp);if(after>before)showLevelUp(after);
+}
+
+/* ============ Render ============ */
+const TABS=[['hoy','Hoy'],['semana','Semana'],['misiones','Misiones'],['cofres','Cofres'],['heroe','Personaje']];
+function renderNav(){
+  const nav=$('#nav');
+  nav.querySelectorAll('button').forEach(b=>b.remove());
+  for(const [k,l] of TABS){const b=document.createElement('button');b.innerHTML=ICONS[k]+'<span>'+l+'</span>';if(VIEW===k)b.setAttribute('aria-current','page');
+    b.onclick=()=>{VIEW=k;render();window.scrollTo({top:0})};nav.appendChild(b)}
+  nav.hidden=!S;
+}
+function render(){
+  renderNav();
+  const main=$('#main');
+  if(!S){main.innerHTML=welcomeHtml();bindWelcome();return}
+  main.innerHTML={hoy:viewHoy,semana:viewSemana,misiones:viewMisiones,cofres:viewCofres,heroe:viewHeroe}[VIEW]();
+  bindView();
+  startTick();
+}
+let softQueued=false;
+function softRender(){if(softQueued)return;softQueued=true;requestAnimationFrame(()=>{softQueued=false;if(document.querySelector('.scrim'))return;const y=window.scrollY;render();window.scrollTo(0,y)})}
+
+function emblemSvg(L,size){
+  const st=stageOf(L).name;const gid='g'+Math.random().toString(36).slice(2,6);
+  const defs=`<defs><radialGradient id="${gid}" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="#2a3a3f"/><stop offset="1" stop-color="#101719"/></radialGradient><radialGradient id="${gid}l" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffe2a8"/><stop offset=".5" stop-color="#dca45a"/><stop offset="1" stop-color="#dca45a" stop-opacity="0"/></radialGradient></defs>`;
+  const ring=`<circle cx="60" cy="60" r="56" fill="url(#${gid})" stroke="#a8743f" stroke-width="1.5"/><circle cx="60" cy="60" r="50" fill="none" stroke="#33454d" stroke-dasharray="2 5"/>`;
+  const stars=`<g fill="#a7bde9"><circle cx="30" cy="30" r="1.2"/><circle cx="88" cy="26" r="1"/><circle cx="94" cy="58" r="1.3"/><circle cx="24" cy="70" r=".9"/><circle cx="76" cy="40" r=".8"/></g>`;
+  const soil=`<path d="M22 86c12-6 64-6 76 0v6c-14 6-62 6-76 0z" fill="#3b2a1c"/><path d="M22 86c12-6 64-6 76 0" fill="none" stroke="#5a4029" stroke-width="1.5"/>`;
+  let art='';
+  if(st==='Semilla')art=`<circle cx="60" cy="76" r="16" fill="url(#${gid}l)" opacity=".7"/><ellipse cx="60" cy="78" rx="9" ry="11" fill="#c98d45"/><path d="M60 68c3 3 3 16 0 20" stroke="#ffe2a8" stroke-width="1.3" fill="none"/>`;
+  else if(st==='Brote')art=`<circle cx="60" cy="72" r="20" fill="url(#${gid}l)" opacity=".5"/><path d="M60 86V58" stroke="#6a9b74" stroke-width="3" stroke-linecap="round"/><path d="M60 64c-12 0-17-8-17-14 9 0 17 5 17 14zM60 60c0-10 6-16 16-16 0 9-6 16-16 16z" fill="#6a9b74"/>`;
+  else if(st==='Raíz')art=`<path d="M60 86V50" stroke="#6a9b74" stroke-width="4" stroke-linecap="round"/><path d="M60 58c-14 0-20-9-20-16 10 0 20 6 20 16zM60 52c0-12 7-19 19-19 0 11-7 19-19 19z" fill="#6a9b74"/><path d="M60 88c-4 6-12 8-18 8M60 88c3 6 10 9 17 9M60 88v10" stroke="#c98d45" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
+  else if(st==='Árbol')art=`<path d="M60 88V54" stroke="#7a5a3a" stroke-width="6" stroke-linecap="round"/><circle cx="60" cy="44" r="22" fill="#4f7d5a"/><circle cx="46" cy="50" r="13" fill="#5f8f6b"/><circle cx="74" cy="50" r="13" fill="#5f8f6b"/><circle cx="60" cy="34" r="12" fill="#6a9b74"/><circle cx="66" cy="44" r="2.5" fill="#dca45a"/><circle cx="52" cy="40" r="2" fill="#dca45a"/>`;
+  else art=`<g stroke="#a7bde9" stroke-width="1" opacity=".8"><path d="M34 40L52 30L70 44L86 34M52 30L56 58L80 70M56 58L40 76"/></g><g fill="#ffe2a8"><circle cx="34" cy="40" r="2.6"/><circle cx="52" cy="30" r="3.2"/><circle cx="70" cy="44" r="2.4"/><circle cx="86" cy="34" r="2.8"/><circle cx="56" cy="58" r="3.6"/><circle cx="80" cy="70" r="2.4"/><circle cx="40" cy="76" r="2.6"/></g><circle cx="56" cy="58" r="14" fill="url(#${gid}l)" opacity=".5"/>`;
+  return `<svg viewBox="0 0 120 120" role="img" aria-label="Emblema: ${st}">${defs}${ring}${stars}${st==='Constelación'?'':soil}${art}</svg>`;
+}
+
+function heroHtml(){
+  const L=levelFromXp(S.xp),a=xpFor(L),b=xpFor(L+1),p=Math.min(100,(S.xp-a)/(b-a)*100);
+  return `<section class="hero">
+    <div class="emblem">${emblemSvg(L)}</div>
+    <div class="hero-info">
+      <span class="eyebrow">Nivel ${L} · ${esc(stageOf(L).name)}</span>
+      <div class="hero-title">${esc(S.name)}</div>
+      <div class="muted" style="font-size:13.5px">${esc(titleOf(L))}</div>
+      <div class="xpbar" role="progressbar" aria-valuenow="${Math.round(p)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${p}%"></i></div>
+      <div class="hero-stats"><span><b>${S.xp-a}</b> / ${b-a} XP</span><span><b>${S.frag}</b> fragmentos estelares</span></div>
+    </div>
+  </section>`;
+}
+
+function greeting(){const h=new Date().getHours();return h<5?'Buena madrugada':h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches'}
+
+function missionCard(it,key,opts={}){
+  const {m,s}=it;const done=isDone(m.id,key);const d=DIFF[m.diff]||DIFF.media;
+  const st=streakOf(m);const running=S.timer&&S.timer.mid===m.id;
+  const chips=[`<span class="chip">${TYPES[m.type]}</span>`,`<span class="chip"><span class="dot" style="background:${ATTRS[m.attr].color}"></span>${ATTRS[m.attr].name}</span>`,`<span class="chip">${d.name} · ${d.xp} XP</span>`];
+  if(m.tag==='clase')chips.push('<span class="chip star">Clase</span>');
+  if(it.clash)chips.push('<span class="chip danger">Cruce de horario</span>');
+  if(st&&st.cur)chips.push(`<span class="chip amber">${ICONS.flame} ${st.cur} ${st.cur===1?'día':'días'}</span>`);
+  if(m.deadline){const days=Math.round((parseDk(m.deadline)-parseDk(dk(new Date())))/864e5);chips.push(`<span class="chip ${days<0?'danger':days<=7?'amber':''}">${days<0?'Vencida':days===0?'Vence hoy':'Faltan '+days+' d'}</span>`)}
+  if(m.type==='proyecto'&&m.milestones.length){const dn=m.milestones.filter(x=>x.done).length;chips.push(`<span class="chip star">${dn}/${m.milestones.length} hitos</span>`)}
+  const exp=UI.expanded[m.id];
+  return `<article class="mcard ${done?'done':''} ${opts.now?'now':''}">
+    <div class="mtime">${s.start?fmtTime(s.start):'—'}<small>${fmtDur(s.dur)}</small></div>
+    <div class="mbody">
+      <div class="mtitle">${esc(m.title)}</div>
+      <div class="mchips">${chips.join('')}</div>
+      ${m.desc?`<button class="more" data-act="expand" data-id="${m.id}">${exp?'Ocultar detalles':'Ver detalles'}</button>${exp?`<div class="mdesc">${esc(m.desc)}</div>`:''}`:''}
+    </div>
+    <div class="mactions">
+      <button class="check ${done?'on':''}" data-act="done" data-id="${m.id}" data-key="${key}" aria-label="${done?'Desmarcar':'Completar'} ${esc(m.title)}" aria-pressed="${done}">${ICONS.check}</button>
+      ${!done&&opts.timer?`<button class="tbtn ${running?'run':''}" data-act="timer" data-id="${m.id}" aria-label="${running?'Detener':'Iniciar'} temporizador">${running?ICONS.stop:ICONS.play}</button>${running?`<span class="timer" data-timer="${S.timer.at}">${fmtClock(Date.now()-S.timer.at)}</span>`:''}`:''}
+    </div>
+  </article>`;
+}
+
+function viewHoy(){
+  const now=new Date(),key=dk(now),ag=agendaFor(now);
+  const doneN=ag.filter(it=>isDone(it.m.id,key)).length;
+  const nowMin=now.getHours()*60+now.getMinutes();
+  let focus=null;
+  for(const it of ag){if(isDone(it.m.id,key))continue;const st=toMin(it.s.start),en=st+(+it.s.dur||0);if(nowMin>=st&&nowMin<Math.max(en,st+1)){focus=it.m.id;break}}
+  if(!focus){const nx=ag.find(it=>!isDone(it.m.id,key)&&toMin(it.s.start)>=nowMin);if(nx)focus=nx.m.id}
+  const habits=S.missions.filter(m=>m.type==='habito'&&m.active).map(m=>({m,st:streakOf(m)})).sort((a,b)=>b.st.cur-a.st.cur);
+  return `<div class="stack">
+    <div class="sec-head"><div><span class="eyebrow">${DAYS_FULL[now.getDay()]}, ${fmtDate(now)}</span><h1>${greeting()}, ${esc(S.name)}</h1></div><span class="sync" id="syncline">${syncHtml()}</span></div>
+    ${heroHtml()}
+    <div class="dayprog"><span class="num" style="font-weight:700">${doneN}/${ag.length}</span><div class="bar"><i style="width:${ag.length?doneN/ag.length*100:0}%"></i></div><span class="muted" style="font-size:13px">${ag.length&&doneN===ag.length?'Día completo':'misiones de hoy'}</span></div>
+  </div>
+  <section class="sec">
+    <div class="sec-head"><h2>Misiones de hoy</h2><button class="btn sm" data-act="new">${ICONS.plus.replace('<svg','<svg width="14" height="14"')} Nueva misión</button></div>
+    <div class="mlist">${ag.length?ag.map(it=>missionCard(it,key,{timer:true,now:it.m.id===focus})).join(''):'<div class="empty">No tienes misiones programadas hoy. Crea una o disfruta tu descanso.</div>'}</div>
+  </section>
+  ${habits.length?`<section class="sec"><div class="sec-head"><h2>Rachas</h2><span class="muted" style="font-size:12.5px">Si fallas un día programado, la racha se reduce a la mitad</span></div>
+    <div class="streaks">${habits.map(h=>`<div class="streak"><b>${h.st.cur}</b><div>${esc(h.m.title)}</div><div class="muted" style="font-size:11.5px">Mejor: ${h.st.best}</div></div>`).join('')}</div></section>`:''}
+  <section class="sec"><div class="sec-head"><h2>Últimos 7 días</h2><span class="muted" style="font-size:12.5px">% de misiones cumplidas</span></div>
+    <div class="chartbox">${weekChart()}</div></section>
+  ${S.frag>=RARITY.comun.cost?`<section class="sec"><button class="btn primary" data-go="cofres">Tienes ${S.frag} fragmentos: abrir un cofre</button></section>`:''}`;
+}
+
+function weekChart(){
+  const W=640,H=180,pl=34,pr=10,pt=14,pb=28;const today=new Date();
+  const data=[];for(let i=6;i>=0;i--){const d=addDays(today,-i);const r=dayRatio(d);data.push({d,r})}
+  const bw=(W-pl-pr)/7;const y=v=>pt+(H-pt-pb)*(1-v);
+  let g='';for(const v of [0,.5,1]){g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="#25333a" stroke-width="1"/><text x="${pl-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="#8e9c98" font-family="Manrope">${v*100}%</text>`}
+  let bars='';data.forEach((p,i)=>{const x=pl+i*bw+bw*.22,w=bw*.56;const isT=i===6;
+    if(p.r!==null){const h=(H-pt-pb)*p.r;bars+=`<rect x="${x}" y="${y(p.r)}" width="${w}" height="${Math.max(h,2)}" rx="4" fill="${isT?'#dca45a':'#6a9b74'}" opacity="${isT?1:.85}"/>`;
+      if(p.r>0)bars+=`<text x="${x+w/2}" y="${y(p.r)-5}" text-anchor="middle" font-size="11" fill="#c9c2b2" font-family="Manrope">${Math.round(p.r*100)}</text>`}
+    else bars+=`<text x="${x+w/2}" y="${y(0)-6}" text-anchor="middle" font-size="10" fill="#8e9c98" font-family="Manrope">—</text>`;
+    bars+=`<text x="${x+w/2}" y="${H-8}" text-anchor="middle" font-size="11.5" fill="${isT?'#dca45a':'#8e9c98'}" font-family="Manrope" font-weight="${isT?700:500}">${DAYS[p.d.getDay()]}</text>`});
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cumplimiento de los últimos 7 días">${g}${bars}</svg>`;
+}
+
+function viewSemana(){
+  const mon=addDays(mondayOf(new Date()),UI.weekOffset*7);const tk=dk(new Date());
+  const cols=[];for(let i=0;i<7;i++){const d=addDays(mon,i),k=dk(d),ag=agendaFor(d);
+    cols.push(`<div class="wday ${k===tk?'today':''}"><h4>${DAYS_FULL[d.getDay()]} <span>${fmtDate(d)}</span></h4>
+      ${ag.length?ag.map(it=>`<button class="wslot ${isDone(it.m.id,k)?'done':''} ${it.clash?'clash':''}" style="border-left-color:${it.clash?'var(--danger)':ATTRS[it.m.attr].color}" data-act="slot" data-id="${it.m.id}" data-key="${k}"><span class="t">${it.s.start?fmtTime(it.s.start).replace(' a. m.','a').replace(' p. m.','p'):''}</span><span class="n">${esc(it.m.title)}${isDone(it.m.id,k)?' ✓':''}${it.clash?'<br><small style="color:var(--danger)">Cruce</small>':''}</span></button>`).join(''):'<div class="muted" style="font-size:12.5px">Libre</div>'}
+    </div>`)}
+  const end=addDays(mon,6);
+  return `<div class="sec-head"><div><span class="eyebrow">Horario semanal</span><h1>Semana del ${fmtDate(mon)} al ${fmtDate(end)}</h1></div>
+    <div class="weeknav"><button class="icon-btn" data-act="wprev" aria-label="Semana anterior">${ICONS.left}</button>${UI.weekOffset?'<button class="btn sm ghost" data-act="wnow">Hoy</button>':''}<button class="icon-btn" data-act="wnext" aria-label="Semana siguiente">${ICONS.right}</button></div></div>
+    <p class="muted" style="font-size:13px;margin:10px 0 16px">Toca una misión para marcarla. Solo puedes marcar días de hoy hacia atrás.</p>
+    <div class="week">${cols.join('')}</div>`;
+}
+
+function viewMisiones(){
+  const f=UI.mfilter;
+  const list=S.missions.filter(m=>f==='todas'||(f==='clases'?m.tag==='clase':m.type===f));
+  const seg=[['todas','Todas'],['clases','Clases'],['rutina','Rutinas'],['habito','Hábitos'],['proyecto','Proyectos']];
+  const body=f==='proyecto'?list.map(projectCard).join(''):list.map(m=>{
+    const d=DIFF[m.diff]||DIFF.media;
+    const sched=(m.slots||[]).map(s=>(s.date?fmtDate(parseDk(s.date)):DAYS[s.day])+(s.start?' '+fmtTime(s.start):'')).join(' · ');
+    return `<div class="lcard ${m.active?'':'paused'}"><div class="mbody">
+      <div class="mtitle">${esc(m.title)}</div>
+      <div class="mchips"><span class="chip">${TYPES[m.type]}</span><span class="chip"><span class="dot" style="background:${ATTRS[m.attr].color}"></span>${ATTRS[m.attr].name}</span><span class="chip">${d.name}</span>${m.tag==='clase'?'<span class="chip star">Clase</span>':''}${m.active?'':'<span class="chip">En pausa</span>'}</div>
+      <div class="muted" style="font-size:12.5px">${esc(sched)||'Sin horario'}</div></div>
+      <button class="icon-btn" data-act="edit" data-id="${m.id}" aria-label="Editar ${esc(m.title)}">${ICONS.edit}</button></div>`}).join('');
+  return `<div class="sec-head"><div><span class="eyebrow">Tu tablero</span><h1>Misiones</h1></div><button class="btn primary" data-act="new">${ICONS.plus.replace('<svg','<svg width="16" height="16"')} Nueva misión</button></div>
+    <div class="seg" style="margin:16px 0">${seg.map(([k,l])=>`<button data-act="mfilter" data-f="${k}" aria-pressed="${f===k}">${l}</button>`).join('')}</div>
+    <div class="mlist">${body||'<div class="empty">Aún no hay misiones en esta categoría.</div>'}</div>`;
+}
+function projectCard(m){
+  const n=m.milestones.length,dn=m.milestones.filter(x=>x.done).length,p=n?dn/n*100:0;
+  return `<div class="pcard"><div class="row" style="justify-content:space-between;flex-wrap:nowrap"><div class="mbody"><div class="mtitle" style="font-family:var(--f-display);font-size:22px">${esc(m.title)}</div>
+    <div class="mchips"><span class="chip">${(DIFF[m.diff]||DIFF.media).name}</span>${m.deadline?`<span class="chip amber">Fecha límite: ${fmtDate(parseDk(m.deadline))}</span>`:''}</div></div>
+    <button class="icon-btn" data-act="edit" data-id="${m.id}" aria-label="Editar proyecto">${ICONS.edit}</button></div>
+    <div class="row"><div class="pbar" style="flex:1"><i style="width:${p}%"></i></div><span class="num muted" style="font-size:13px">${Math.round(p)}%</span></div>
+    <div>${m.milestones.map(mi=>`<label class="mile ${mi.done?'done':''}"><input type="checkbox" ${mi.done?'checked':''} data-act="mile" data-id="${m.id}" data-mi="${mi.id}"><span>${esc(mi.title)}</span></label>`).join('')||'<div class="muted" style="font-size:13px">Agrega hitos editando el proyecto.</div>'}</div></div>`;
+}
+
+function viewCofres(){
+  const r=UI.rarity;
+  const g=UI.gfilter;const list=REWARDS.filter(x=>g==='todas'||x.cat===g).slice().sort((a,b)=>a.cat==='saga'&&b.cat==='saga'&&g==='saga'?(a.chapter||0)-(b.chapter||0):b.at-a.at);
+  const nextCh=S.saga.chapter+1;
+  return `<div class="sec-head"><div><span class="eyebrow">Altar de los cofres</span><h1>Cofres y grimorio</h1></div></div>
+  <section class="altar" style="margin-top:16px">
+    <div class="frag-count"><b>${S.frag}</b><span class="muted">fragmentos estelares<br><span style="font-size:12px">Las misiones más difíciles dan más fragmentos.</span></span></div>
+    <div class="stack" style="gap:8px"><span class="lbl">1. Elige la rareza</span>
+      <div class="rarities">${Object.entries(RARITY).map(([k,v])=>`<button class="rar" style="--rc:${v.color}" data-act="rar" data-r="${k}" aria-pressed="${r===k}" ${S.frag<v.cost?'disabled':''}><span class="rn">${v.name}</span><span class="rc num">${v.cost} fragmentos</span><span class="rc muted">${v.words} palabras</span></button>`).join('')}</div></div>
+    <div class="stack" style="gap:8px"><span class="lbl">2. Elige la categoría</span>
+      <div class="cats">${Object.entries(CATS).map(([k,v])=>`<button class="cat" data-act="cat" data-c="${k}" aria-pressed="${UI.cat===k}">${ICONS['cat_'+k]}<span>${v.name}${k==='saga'?`<br><span class="muted" style="font-size:11.5px;font-weight:500">Siguiente: capítulo ${nextCh}</span>`:''}</span></button>`).join('')}</div></div>
+    <button class="btn primary" data-act="open" ${!r||S.frag<(RARITY[r]?.cost||999)||UI.busy?'disabled':''}>${UI.busy?'Abriendo…':r?`Abrir cofre ${RARITY[r].name.toLowerCase()} (${RARITY[r].cost})`:'Elige una rareza para abrir'}</button>
+    <span class="muted" style="font-size:12px">Por ahora los cofres traen contenido de la biblioteca. La escritura con IA llega en la Fase 2. Los fragmentos solo se descuentan si el cofre se abre con éxito.</span>
+  </section>
+  <section class="sec"><div class="sec-head"><h2>Grimorio</h2><span class="muted num" style="font-size:13px">${REWARDS.length} recompensas</span></div>
+    <div class="seg">${[['todas','Todas'],...Object.entries(CATS).map(([k,v])=>[k,v.short])].map(([k,l])=>`<button data-act="gfilter" data-f="${k}" aria-pressed="${g===k}">${l}</button>`).join('')}</div>
+    <div class="grim">${list.length?list.map(x=>`<button class="gitem" data-act="read" data-id="${x.id}"><span class="gem" style="background:${RARITY[x.rarity]?.color||'#888'}"></span><span class="gbody"><span class="gt">${esc(x.title)}</span><br><span class="gm">${CATS[x.cat]?.name||''} · ${RARITY[x.rarity]?.name||''} · ${fmtDate(new Date(x.at))}</span></span></button>`).join(''):'<div class="empty">Tu grimorio está vacío. Completa misiones, reúne fragmentos y abre tu primer cofre.</div>'}</div>
+  </section>`;
+}
+
+function viewHeroe(){
+  const L=levelFromXp(S.xp);
+  let total=0;for(const k in S.log)total+=Object.keys(S.log[k]).length;
+  let best=0;for(const m of S.missions){const s=streakOf(m);if(s)best=Math.max(best,s.best)}
+  const today=new Date();const start=addDays(mondayOf(today),-77);let cells='';
+  for(let i=0;i<84;i++){const d=addDays(start,i);const fut=d>today;const r=fut?null:dayRatio(d);
+    const c=r===null?'var(--surface-2)':r===0?'#2a2320':`rgba(106,155,116,${.25+.75*r})`;
+    cells+=`<i style="background:${c};${fut?'opacity:.3':''}" title="${fmtDate(d)}${r!==null?': '+Math.round(r*100)+' %':''}"></i>`}
+  return `<div class="sec-head"><div><span class="eyebrow">Ficha del personaje</span><h1>${esc(S.name)}</h1></div><span class="sync" id="syncline">${syncHtml()}</span></div>
+  <div style="margin-top:16px">${heroHtml()}</div>
+  <section class="sec"><h2>Atributos</h2><div class="attrs">${Object.entries(ATTRS).map(([k,v])=>`<div class="attr"><span>${v.name}</span><div class="ab"><i style="width:${attrProg(S.attrs[k])*100}%;background:${v.color}"></i></div><span class="al">Nv. ${attrLevel(S.attrs[k])}</span></div>`).join('')}</div></section>
+  <section class="sec"><h2>Estadísticas</h2><div class="stats">
+    <div class="stat"><b>${total}</b><span>misiones completadas</span></div>
+    <div class="stat"><b>${best}</b><span>mejor racha</span></div>
+    <div class="stat"><b>${REWARDS.length}</b><span>recompensas</span></div>
+    <div class="stat"><b>${S.saga.chapter}</b><span>capítulos de la saga</span></div></div></section>
+  <section class="sec"><div class="sec-head"><h2>Últimas 12 semanas</h2><span class="muted" style="font-size:12.5px">Más verde = más cumplimiento</span></div>
+    <div class="chartbox" style="overflow-x:auto"><div class="heat">${cells}</div></div></section>
+  <section class="sec"><h2>Recordatorios</h2>
+    <div class="pcard">
+      <div class="row" style="justify-content:space-between">
+        <div><div class="mtitle">Este dispositivo</div><div class="muted" style="font-size:13px">${!PUSH.supported?'Este navegador no admite notificaciones push.':PUSH.perm==='denied'?'Bloqueadas: permítelas en los ajustes del sitio en Chrome.':PUSH.subscribed?'Recibe tus recordatorios.':'Aún no recibe recordatorios.'}</div></div>
+        ${PUSH.supported&&PUSH.perm!=='denied'?(PUSH.subscribed?'<button class="btn sm ghost" data-act="pushoff">Desactivar</button>':'<button class="btn primary" data-act="pushon">Activar notificaciones</button>'):''}
+      </div>
+      ${PUSH.subscribed?'<button class="btn sm" data-act="pushtest" style="align-self:flex-start">Enviar notificación de prueba</button>':''}
+      <label class="row" style="gap:8px;font-size:14px;border-top:1px solid var(--line);padding-top:12px"><input type="checkbox" id="s-on" data-set="remindersOn" ${S.settings.remindersOn?'checked':''} style="width:18px;height:18px;accent-color:var(--amber)"> Recordatorios activos en todos mis dispositivos</label>
+      <div class="grid2">
+        <div class="field"><label for="s-def">Aviso predeterminado</label><select class="inp" id="s-def" data-set="defaultRemind">${[0,5,10,15,30,60].map(v=>`<option value="${v}" ${+S.settings.defaultRemind===v?'selected':''}>${v?v+' min antes':'A la hora exacta'}</option>`).join('')}</select></div>
+        <div class="field"><label for="s-sum">Resumen nocturno</label><div class="row" style="flex-wrap:nowrap"><input type="checkbox" id="s-sumon" data-set="summaryOn" ${S.settings.summaryOn?'checked':''} style="width:18px;height:18px;accent-color:var(--amber)" aria-label="Activar resumen nocturno"><input class="inp" type="time" id="s-sum" data-set="summaryTime" value="${S.settings.summaryTime||''}"></div></div>
+      </div>
+      <div class="field"><span class="lbl">Horario de silencio (opcional)</span><div class="grid2"><input class="inp" type="time" id="s-qs" data-set="quietStart" value="${S.settings.quietStart||''}" aria-label="Silencio desde"><input class="inp" type="time" id="s-qe" data-set="quietEnd" value="${S.settings.quietEnd||''}" aria-label="Silencio hasta"></div>
+        <span class="muted" style="font-size:12px">Durante este horario no llegan avisos. Déjalo vacío para recibirlos siempre. Cada misión puede tener su propio aviso al editarla.</span></div>
+    </div>
+  </section>
+  <section class="sec"><h2>Respaldo y cuenta</h2>
+    <div class="pcard">
+      <div class="row"><button class="btn" data-act="expjson">Descargar respaldo</button><button class="btn" data-act="import">Importar respaldo</button><button class="btn ghost" data-act="logout">Cerrar sesión</button></div>
+      <div class="muted" style="font-size:12.5px">Sesión: ${esc(Store.user?Store.user.email:'')}</div>
+    </div>
+  </section>
+  <section class="sec"><h2>El camino</h2><div class="stack" style="gap:8px">${STAGES.map(s=>`<div class="row" style="gap:12px;opacity:${L>=s.from?1:.45}"><div style="width:44px;height:44px">${emblemSvg(s.from)}</div><div><b>${s.name}</b><div class="muted" style="font-size:12.5px">Desde el nivel ${s.from}</div></div></div>`).join('')}</div></section>`;
+}
+
+function welcomeHtml(){
+  return `<div class="welcome">
+    <div class="emblem">${emblemSvg(1)}</div>
+    <span class="eyebrow">Selvaluz · Orilla del Gran Río de Plata Dormida</span>
+    <h1 style="font-size:44px">Semilla Estelar</h1>
+    <p>Cayó del cielo una noche sin luna. Para crecer, debe cultivar siete virtudes con cada misión que cumpla. Cada rutina, cada clase y cada madrugada la acercan a su forma final.</p>
+    <p style="font-size:15px;font-family:var(--f-ui)">Al despertar se cargan tus clases, tus hábitos y el proyecto del anteproyecto. Todo se puede editar después.</p>
+    <div class="row"><button class="btn primary" id="awaken">Despertar a Semilla Estelar</button><button class="btn" id="wimport">Importar respaldo anterior</button></div>
+    <span class="muted" style="font-size:13px">¿Ya jugabas en la versión de Claude? Descarga allí tu respaldo (pestaña Personaje) e impórtalo aquí.</span>
+    <span class="sync">${syncHtml()}</span>
+  </div>`;
+}
+function bindWelcome(){
+  $('#wimport').onclick=pickImport;
+  $('#awaken').onclick=()=>{S=blankState();S.missions=defaultMissions();Store.save();if(Store.mode==='cloud')Store.flush();VIEW='hoy';render();toast('Semilla Estelar ha despertado')};
+}
+
+/* ============ Eventos ============ */
+function bindView(){
+  const main=$('#main');
+  main.onclick=e=>{
+    const t=e.target.closest('[data-act],[data-go]');if(!t)return;
+    if(t.dataset.go){VIEW=t.dataset.go;render();window.scrollTo({top:0});return}
+    const a=t.dataset.act,id=t.dataset.id;
+    if(a==='done')toggleDone(id,t.dataset.key);
+    else if(a==='timer')toggleTimer(id);
+    else if(a==='expand'){UI.expanded[id]=!UI.expanded[id];softRender()}
+    else if(a==='new')openEditor(null);
+    else if(a==='edit')openEditor(id);
+    else if(a==='mfilter'){UI.mfilter=t.dataset.f;render()}
+    else if(a==='gfilter'){UI.gfilter=t.dataset.f;render()}
+    else if(a==='wprev'){UI.weekOffset--;render()}
+    else if(a==='wnext'){UI.weekOffset++;render()}
+    else if(a==='wnow'){UI.weekOffset=0;render()}
+    else if(a==='slot'){const k=t.dataset.key;if(k>dk(new Date())){toast('Aún no llega ese día');return}toggleDone(id,k)}
+    else if(a==='rar'){UI.rarity=t.dataset.r;render()}
+    else if(a==='cat'){UI.cat=t.dataset.c;render()}
+    else if(a==='open')openChest();
+    else if(a==='pushon')enablePush();
+    else if(a==='pushoff')disablePush();
+    else if(a==='pushtest')testPush();
+    else if(a==='import')pickImport();
+    else if(a==='logout'){Store.flush().then(()=>Store.sb.auth.signOut())}
+    else if(a==='expcal'){const {csv,count}=buildCalendarCsv(12);if(!count){toast('No hay misiones con hora para exportar');return}saveFile('semilla-estelar-calendario.csv',csv,`${count} eventos exportados`)}
+    else if(a==='expjson'){saveFile('semilla-estelar-respaldo-'+dk(new Date())+'.json',JSON.stringify({app:'semilla-estelar',version:1,exportedAt:new Date().toISOString(),state:S,rewards:REWARDS},null,2),'Respaldo descargado')}
+    else if(a==='read'){const r=REWARDS.find(x=>x.id===id);if(r)readReward(r)}
+  };
+  main.onchange=e=>{const t=e.target;if(t.dataset.act==='mile')toggleMilestone(t.dataset.id,t.dataset.mi);
+    else if(t.dataset.set){const k=t.dataset.set;S.settings[k]=t.type==='checkbox'?t.checked:(k==='defaultRemind'?+t.value:t.value);Store.save();toast('Ajuste guardado')}};
+}
+function startTick(){clearInterval(tickT);if(!S||!S.timer)return;tickT=setInterval(()=>{document.querySelectorAll('[data-timer]').forEach(el=>el.textContent=fmtClock(Date.now()-(+el.dataset.timer)))},1000)}
+
+/* ============ Modal / editor ============ */
+function openModal(html,onBind){
+  const sc=document.createElement('div');sc.className='scrim';sc.innerHTML=`<div class="modal" role="dialog" aria-modal="true">${html}</div>`;
+  document.body.appendChild(sc);document.body.style.overflow='hidden';
+  const close=()=>{sc.remove();document.body.style.overflow='';softRender()};
+  sc.addEventListener('click',e=>{if(e.target===sc||e.target.closest('[data-close]'))close()});
+  const onKey=e=>{if(e.key==='Escape'){close();document.removeEventListener('keydown',onKey)}};document.addEventListener('keydown',onKey);
+  onBind&&onBind(sc.querySelector('.modal'),close);
+  return close;
+}
+function openEditor(id){
+  const orig=id?S.missions.find(m=>m.id===id):null;
+  const m=orig?clone(orig):{id:uid('m'),type:'rutina',title:'',desc:'',attr:'disciplina',diff:'media',slots:[{day:new Date().getDay(),start:'08:00',dur:60}],deadline:'',milestones:[],active:true,tag:'',created:dk(new Date())};
+  const slotRow=(s,i)=>`<div class="slotrow" data-i="${i}">
+    <select class="inp" data-f="when" aria-label="Día">${DAYS_FULL.map((d,k)=>`<option value="${k}" ${!s.date&&s.day===k?'selected':''}>${d}</option>`).join('')}<option value="date" ${s.date?'selected':''}>Fecha única</option></select>
+    ${s.date?`<input class="inp" type="date" data-f="date" value="${s.date}" aria-label="Fecha">`:`<input class="inp" type="time" data-f="start" value="${s.start||''}" aria-label="Hora de inicio">`}
+    <input class="inp" type="number" min="0" step="5" data-f="dur" value="${s.dur||0}" aria-label="Duración en minutos" title="Duración (min)">
+    <button class="icon-btn" style="width:34px;height:34px" data-rm="${i}" aria-label="Quitar horario">${ICONS.x}</button>
+    ${s.date?`<span></span><input class="inp" type="time" data-f="start" value="${s.start||''}" aria-label="Hora de inicio"><span class="muted" style="font-size:11px">min</span><span></span>`:''}
+  </div>`;
+  const html=()=>`<div class="modal-head"><h2>${orig?'Editar misión':'Nueva misión'}</h2><button class="icon-btn" data-close aria-label="Cerrar">${ICONS.x}</button></div>
+  <form class="stack" id="mform" novalidate>
+    <div class="field"><label for="f-title">Nombre de la misión</label><input class="inp" id="f-title" value="${esc(m.title)}" placeholder="Ej.: Repasar estadística" required></div>
+    <div class="grid2">
+      <div class="field"><label for="f-type">Tipo</label><select class="inp" id="f-type">${Object.entries(TYPES).map(([k,v])=>`<option value="${k}" ${m.type===k?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div class="field"><label for="f-diff">Dificultad</label><select class="inp" id="f-diff">${Object.entries(DIFF).map(([k,v])=>`<option value="${k}" ${m.diff===k?'selected':''}>${v.name} (${v.xp} XP · ${v.frag} frag.)</option>`).join('')}</select></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label for="f-attr">Atributo que mejora</label><select class="inp" id="f-attr">${Object.entries(ATTRS).map(([k,v])=>`<option value="${k}" ${m.attr===k?'selected':''}>${v.name}</option>`).join('')}</select></div>
+      <div class="field"><label for="f-deadline">Fecha límite (opcional)</label><input class="inp" type="date" id="f-deadline" value="${m.deadline||''}"></div>
+    </div>
+    <div class="field"><label for="f-desc">Descripción detallada</label><textarea class="inp" id="f-desc" placeholder="Propósito, pasos y cómo sabrás que la completaste">${esc(m.desc)}</textarea></div>
+    <div class="field"><span class="lbl">Horarios · día, hora de inicio y duración en minutos</span>
+      <div class="daychips" aria-label="Aplicar el primer horario a varios días">${DAYS.map((d,k)=>`<button type="button" data-day="${k}" aria-pressed="${m.slots.some(s=>!s.date&&s.day===k)}">${d}</button>`).join('')}</div>
+      <div class="stack" style="gap:8px" id="slots">${m.slots.map(slotRow).join('')}</div>
+      <div class="row"><button type="button" class="btn sm" id="addslot">${ICONS.plus.replace('<svg','<svg width="14" height="14"')} Añadir horario</button><button type="button" class="btn sm ghost" id="lv">Lun a vie</button><button type="button" class="btn sm ghost" id="td">Todos los días</button></div>
+    </div>
+    <label class="row" style="gap:8px;font-size:14px"><input type="checkbox" id="f-clase" ${m.tag==='clase'?'checked':''} style="width:18px;height:18px;accent-color:var(--amber)"> Es una clase universitaria (cuenta para la asistencia perfecta)</label>
+    <div class="field" id="mbox" ${m.type==='proyecto'?'':'hidden'}><span class="lbl">Hitos del proyecto</span>
+      <div class="stack" style="gap:8px" id="miles">${m.milestones.map((mi,i)=>`<div class="row" style="flex-wrap:nowrap"><input class="inp" data-mi="${i}" value="${esc(mi.title)}" aria-label="Hito ${i+1}"><button type="button" class="icon-btn" style="width:34px;height:34px;flex:none" data-rmmi="${i}" aria-label="Quitar hito">${ICONS.x}</button></div>`).join('')}</div>
+      <button type="button" class="btn sm" id="addmi" style="align-self:flex-start">${ICONS.plus.replace('<svg','<svg width="14" height="14"')} Añadir hito</button></div>
+    <div class="field"><label for="f-remind">Recordatorio</label><select class="inp" id="f-remind"><option value="" ${m.remind===undefined||m.remind===null||m.remind===''?'selected':''}>Predeterminado (${S.settings.defaultRemind?S.settings.defaultRemind+' min antes':'a la hora'})</option><option value="off" ${m.remind==='off'?'selected':''}>Sin aviso</option>${[0,5,10,15,30,60].map(v=>`<option value="${v}" ${m.remind!==''&&m.remind!=='off'&&m.remind!==undefined&&m.remind!==null&&+m.remind===v?'selected':''}>${v?v+' min antes':'A la hora exacta'}</option>`).join('')}</select></div>
+    <label class="row" style="gap:8px;font-size:14px"><input type="checkbox" id="f-active" ${m.active?'checked':''} style="width:18px;height:18px;accent-color:var(--amber)"> Activa (desmárcala para pausarla sin borrarla)</label>
+    <p class="muted" id="ferr" style="color:var(--danger);margin:0" hidden></p>
+    <div class="row" style="justify-content:space-between">
+      ${orig?'<button type="button" class="btn danger" id="del">Eliminar</button>':'<span></span>'}
+      <div class="row"><button type="button" class="btn ghost" data-close>Cancelar</button><button type="submit" class="btn primary">${orig?'Guardar cambios':'Crear misión'}</button></div>
+    </div>
+    <div id="delbox"></div>
+  </form>`;
+  openModal(html(),(md,close)=>{
+    const read=()=>{
+      m.title=md.querySelector('#f-title').value.trim();m.type=md.querySelector('#f-type').value;m.diff=md.querySelector('#f-diff').value;
+      m.attr=md.querySelector('#f-attr').value;m.deadline=md.querySelector('#f-deadline').value;m.desc=md.querySelector('#f-desc').value;
+      {const rv=md.querySelector('#f-remind').value;if(rv==='')delete m.remind;else m.remind=rv==='off'?'off':+rv}
+      m.tag=md.querySelector('#f-clase').checked?'clase':'';m.active=md.querySelector('#f-active').checked;
+      m.slots=[...md.querySelectorAll('.slotrow')].map(r=>{const w=r.querySelector('[data-f=when]').value;const start=r.querySelector('[data-f=start]')?.value||'';const dur=+r.querySelector('[data-f=dur]').value||0;
+        return w==='date'?{date:r.querySelector('[data-f=date]')?.value||dk(new Date()),start,dur}:{day:+w,start,dur}});
+      const old=m.milestones;m.milestones=[...md.querySelectorAll('[data-mi]')].map((inp,i)=>({...(old[i]||{id:uid('mi'),done:false}),title:inp.value.trim()})).filter(x=>x.title);
+    };
+    const rerender=()=>{read();md.innerHTML=html();bind()};
+    const bind=()=>{
+      md.querySelector('#f-type').onchange=rerender;
+      md.querySelectorAll('[data-f=when]').forEach(s=>s.onchange=()=>{read();const i=+s.closest('.slotrow').dataset.i;const sl=m.slots[i];if(s.value==='date'){m.slots[i]={date:dk(new Date()),start:sl.start,dur:sl.dur}}else m.slots[i]={day:+s.value,start:sl.start,dur:sl.dur};md.innerHTML=html();bind()});
+      md.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{read();m.slots.splice(+b.dataset.rm,1);md.innerHTML=html();bind()});
+      md.querySelector('#addslot').onclick=()=>{read();const base=m.slots[0]||{start:'08:00',dur:60};m.slots.push({day:new Date().getDay(),start:base.start,dur:base.dur});md.innerHTML=html();bind()};
+      const setDays=ds=>{read();const base=m.slots.find(s=>!s.date)||{start:'08:00',dur:60};m.slots=m.slots.filter(s=>s.date).concat(ds.map(d=>({day:d,start:base.start,dur:base.dur})));md.innerHTML=html();bind()};
+      md.querySelector('#lv').onclick=()=>setDays([1,2,3,4,5]);
+      md.querySelector('#td').onclick=()=>setDays([0,1,2,3,4,5,6]);
+      md.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{read();const d=+b.dataset.day;const has=m.slots.some(s=>!s.date&&s.day===d);
+        if(has)m.slots=m.slots.filter(s=>s.date||s.day!==d);else{const base=m.slots.find(s=>!s.date)||{start:'08:00',dur:60};m.slots.push({day:d,start:base.start,dur:base.dur});m.slots.sort((a,b)=>(a.date?9:a.day)-(b.date?9:b.day))}
+        md.innerHTML=html();bind()});
+      md.querySelector('#addmi').onclick=()=>{read();m.milestones.push({id:uid('mi'),title:'Nuevo hito',done:false});md.innerHTML=html();bind();const ins=md.querySelectorAll('[data-mi]');ins[ins.length-1]?.select()};
+      md.querySelectorAll('[data-rmmi]').forEach(b=>b.onclick=()=>{read();m.milestones.splice(+b.dataset.rmmi,1);md.innerHTML=html();bind()});
+      const del=md.querySelector('#del');
+      if(del)del.onclick=()=>{md.querySelector('#delbox').innerHTML=`<div class="confirm-box"><span>¿Eliminar "${esc(orig.title)}"? Su historial se conserva, pero no podrás recuperarla.</span><button type="button" class="btn sm danger" id="delyes">Sí, eliminar</button><button type="button" class="btn sm ghost" id="delno">No</button></div>`;
+        md.querySelector('#delyes').onclick=()=>{S.missions=S.missions.filter(x=>x.id!==orig.id);if(S.timer&&S.timer.mid===orig.id)S.timer=null;Store.save();close();toast('Misión eliminada')};
+        md.querySelector('#delno').onclick=()=>md.querySelector('#delbox').innerHTML=''};
+      md.querySelector('#mform').onsubmit=e=>{e.preventDefault();read();const er=md.querySelector('#ferr');
+        if(!m.title){er.textContent='Escribe un nombre para la misión.';er.hidden=false;md.querySelector('#f-title').focus();return}
+        if(!m.slots.length&&m.type!=='proyecto'){er.textContent='Agrega al menos un horario para que la misión aparezca en tu día.';er.hidden=false;return}
+        if(orig){Object.assign(orig,m)}else S.missions.push(m);
+        Store.save();close();toast(orig?'Cambios guardados':'Misión creada')};
+    };
+    bind();setTimeout(()=>{const t=md.querySelector('#f-title');if(!orig)t.focus()},50);
+  });
+}
+
+/* ============ Cofres ============ */
+let sampleFn=undefined,aiOff=false;
+async function getSample(){return null} // Fase 2: recompensas con IA desde el servidor
+
+function playerContext(){
+  const L=levelFromXp(S.xp);const top=Object.entries(S.attrs).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k])=>ATTRS[k].name).join(', ');
+  const recent=[];const today=new Date();for(let i=0;i<3;i++){const k=dk(addDays(today,-i));for(const mid in (S.log[k]||{})){const m=S.missions.find(x=>x.id===mid);if(m)recent.push(m.title)}}
+  return `Nivel ${L} (${stageOf(L).name}). Atributos más desarrollados: ${top}. Misiones completadas recientemente: ${[...new Set(recent)].slice(0,8).join('; ')||'ninguna aún'}.`;
+}
+function buildPrompt(cat,rarity){
+  const R=RARITY[rarity];
+  const prev=REWARDS.filter(r=>r.cat===cat).slice(0,15).map(r=>'- '+r.title).join('\n')||'(ninguno)';
+  const base=`Eres el narrador y mentor de "Semilla Estelar", un juego de rol de la vida real escrito en español de Colombia. El jugador es Juan Camilo, estudiante de Ingeniería Ambiental en el Chocó (Colombia) que también estudia análisis de datos; en el juego es "Semilla Estelar", una semilla caída de una estrella que crece cultivando siete virtudes: Disciplina, Mente, Espíritu, Patrimonio, Carrera, Cuerpo y Equilibrio emocional.
+Contexto del jugador: ${playerContext()}
+Acaba de abrir un cofre de rareza ${R.name}. Extensión del cuerpo: entre ${R.words} palabras. A mayor rareza, más profundidad y más valor práctico.
+Tono: cálido, humano, directo y sin cursilería. Prosa en párrafos; nada de viñetas dentro del cuerpo.
+Títulos ya entregados en esta categoría (no repitas tema ni título):
+${prev}
+`;
+  const spec={
+    superacion:'Escribe un relato breve de superación personal con personajes FICTICIOS (no uses personas reales, ni datos o cifras presentados como hechos verídicos). Que tenga conflicto, caída, aprendizaje y una salida creíble.',
+    patrimonio:'Escribe un consejo práctico de gestión patrimonial y finanzas personales para un estudiante universitario en Colombia (presupuesto, ahorro, fondo de emergencia, deudas, hábitos de dinero, primeras inversiones). Es contenido educativo: no recomiendes entidades, productos ni activos específicos, y no menciones tasas, cifras de mercado o normas actuales que puedan estar desactualizadas. Cierra recordando que para decisiones importantes conviene un asesor.',
+    espiritual:'Escribe un consejo espiritual con enfoque amplio y no dogmático, apto para cualquier creencia: atención plena, propósito, gratitud, silencio, conexión con la naturaleza. No prometas efectos de salud ni cites estudios.',
+    emocional:'Escribe un consejo de regulación emocional basado en técnicas ampliamente usadas (nombrar emociones, respiración, reencuadre de pensamientos, autocompasión, pausa antes de reaccionar), con pasos concretos. No diagnostiques ni cites estudios específicos. Si el tema lo amerita, menciona con naturalidad que buscar apoyo profesional es válido.',
+    carrera:'Escribe un consejo accionable para crecer profesionalmente en Ingeniería Ambiental combinada con análisis de datos (habilidades, portafolio, redacción técnica, trabajo de campo, redes profesionales, proyecto de grado). No inventes cifras salariales ni estadísticas de empleo.'
+  };
+  if(cat==='saga'){
+    const n=S.saga.chapter+1;
+    return base+`
+Tarea: escribe el CAPÍTULO ${n} de la saga de fantasía continua protagonizada por Semilla Estelar en la selva de Selvaluz.
+Resumen de la historia hasta ahora:
+${S.saga.summary||'(La historia aún no empieza: escribe el prólogo e introduce el mundo, a la Abuela Ceiba y a la Bruma Gris.)'}
+Último capítulo: ${S.saga.lastTitle||'ninguno'}
+Reglas: mantén la continuidad (personajes, lugares, objetos y conflicto con la Bruma Gris); avanza la trama de forma clara; relaciona sutilmente el capítulo con alguna virtud reciente del jugador; termina con un gancho para el siguiente capítulo.
+Responde SOLO con un objeto JSON con esta forma exacta:
+{"title":"Capítulo ${n}: <título>","body":"<texto con párrafos separados por \\n\\n>","takeaway":"<una frase con una enseñanza aplicable hoy>","summary":"<resumen ACTUALIZADO de TODA la saga hasta este capítulo, máximo 900 caracteres>"}`;
+  }
+  return base+`
+Tarea: ${spec[cat]}
+Responde SOLO con un objeto JSON con esta forma exacta:
+{"title":"<título breve y evocador>","body":"<texto con párrafos separados por \\n\\n>","takeaway":"<una acción concreta que pueda hacer hoy, en una frase>"}`;
+}
+function fromLibrary(cat){
+  if(cat==='saga'){const n=S.saga.chapter+1;return LIBRARY.saga.find(x=>x.chapter===n)||null}
+  return (LIBRARY[cat]||[]).find(x=>!S.libUsed.includes(x.id))||null;
+}
+async function openChest(){
+  const r=UI.rarity,cat=UI.cat;if(!r||UI.busy)return;const cost=RARITY[r].cost;if(S.frag<cost)return;
+  UI.busy=true;softRender();
+  const ov=chestOverlay(r);
+  let item=null,source='ia',errMsg='';
+  const sample=aiOff?null:await getSample();
+  if(sample){
+    ov.status('Escribiendo tu recompensa…');
+    try{
+      const out=await sample.json(buildPrompt(cat,r),{cache:false,modelTier:r==='legendario'?'complex':'default'});
+      if(out&&typeof out.title==='string'&&typeof out.body==='string'&&out.body.trim())item={title:out.title.trim(),body:out.body.trim(),takeaway:String(out.takeaway||'').trim(),summary:String(out.summary||'').trim()};
+      else errMsg='La respuesta llegó incompleta.';
+    }catch(e){
+      const c=e&&e.code;
+      if(['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(c)){aiOff=true}
+      else if(c==='rate_limited')errMsg='Alcanzaste el límite de uso por ahora. Intenta más tarde.';
+      else if(c==='session_expired')errMsg='Tu sesión expiró. Inicia sesión de nuevo.';
+      else if(c==='refused')errMsg='No se pudo generar este contenido. Prueba otra categoría.';
+      else errMsg='Hubo un problema de conexión. Intenta de nuevo.';
+    }
+  }
+  if(!item&&(!sample||aiOff)&&!errMsg){
+    const lib=fromLibrary(cat);source='biblioteca';
+    if(lib)item={...lib,libId:lib.id};
+    else errMsg=cat==='saga'?'Los siguientes capítulos de la saga llegarán con la Fase 2. Tus fragmentos siguen guardados.':'Ya desbloqueaste todo el contenido de esta categoría. El contenido nuevo llegará con la Fase 2.';
+  }
+  if(!item){ov.close();UI.busy=false;softRender();toast(errMsg);return}
+  const rew={kind:'reward',id:uid('r'),cat,rarity:r,title:item.title,body:item.body,takeaway:item.takeaway||'',at:Date.now(),source};
+  if(cat==='saga'){rew.chapter=S.saga.chapter+1}
+  try{await Store.addReward(rew)}catch(e){ov.close();UI.busy=false;softRender();toast(e&&e.code==='quota_exceeded'?'Tu grimorio está lleno: no se pudo guardar la recompensa.':'No se pudo guardar la recompensa. Tus fragmentos siguen intactos.');return}
+  S.frag-=cost;
+  if(cat==='saga'){S.saga.chapter=rew.chapter;S.saga.lastTitle=rew.title;if(item.summary)S.saga.summary=item.summary.slice(0,1200)}
+  if(item.libId&&cat!=='saga')S.libUsed.push(item.libId);
+  if(Store.mode==='cloud'&&!REWARDS.find(x=>x.id===rew.id))REWARDS=[rew,...REWARDS];
+  Store.save();UI.busy=false;
+  ov.reveal(()=>{readReward(rew)});
+}
+function chestSvg(color){
+  return `<svg viewBox="0 0 160 150"><defs><linearGradient id="cw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b4a2c"/><stop offset="1" stop-color="#3b2716"/></linearGradient></defs>
+  <ellipse cx="80" cy="138" rx="58" ry="7" fill="#000" opacity=".35"/>
+  <path d="M26 70h108v58a6 6 0 0 1-6 6H32a6 6 0 0 1-6-6z" fill="url(#cw)" stroke="${color}" stroke-width="2"/>
+  <path class="lid" d="M26 70c0-24 20-38 54-38s54 14 54 38z" fill="#7a5532" stroke="${color}" stroke-width="2"/>
+  <path d="M26 70h108" stroke="${color}" stroke-width="4"/><path d="M60 34v100M100 34v100" stroke="${color}" stroke-width="3" opacity=".7"/>
+  <rect x="70" y="62" width="20" height="24" rx="3" fill="${color}"/><circle cx="80" cy="72" r="3" fill="#2a1c10"/><path d="M80 74v6" stroke="#2a1c10" stroke-width="2"/></svg>`;
+}
+function chestOverlay(r){
+  const col=RARITY[r].color;const ov=document.createElement('div');ov.className='overlay';
+  ov.innerHTML=`<div class="lvlup"><div class="chestfx shake" style="--rcol:${col}"><div class="rays"></div>${chestSvg(col)}</div>
+    <span class="eyebrow" style="color:${col}">Cofre ${RARITY[r].name}</span><h2 style="color:${col};font-size:32px" id="ovt">Abriendo el cofre…</h2><p class="muted" id="ovs">Reuniendo la luz de tus fragmentos</p></div>`;
+  document.body.appendChild(ov);
+  return {status:t=>{ov.querySelector('#ovs').textContent=t},close:()=>ov.remove(),
+    reveal:cb=>{const fx=ov.querySelector('.chestfx');fx.classList.remove('shake');ov.querySelector('#ovt').textContent='¡Recompensa obtenida!';ov.querySelector('#ovs').textContent='Se guardó en tu grimorio';
+      const b=document.createElement('button');b.className='btn primary';b.textContent='Leer ahora';b.onclick=()=>{ov.remove();cb()};ov.querySelector('.lvlup').appendChild(b);b.focus()}};
+}
+function readReward(r){
+  const paras=String(r.body).split(/\n\s*\n/).map(p=>`<p>${esc(p.trim()).replace(/\n/g,'<br>')}</p>`).join('');
+  openModal(`<div class="modal-head"><div><span class="eyebrow" style="color:${RARITY[r.rarity]?.color}">${CATS[r.cat]?.name} · ${RARITY[r.rarity]?.name}</span></div><button class="icon-btn" data-close aria-label="Cerrar">${ICONS.x}</button></div>
+    <h2 style="font-size:30px;margin-bottom:16px">${esc(r.title)}</h2>
+    <div class="read">${paras}</div>
+    ${r.takeaway?`<div class="takeaway"><b>Para hoy:</b> ${esc(r.takeaway)}</div>`:''}
+    <p class="muted" style="font-size:12px;margin-top:14px">${r.source==='biblioteca'?'Contenido de la biblioteca de respaldo.':'Escrito para ti por Claude.'} ${fmtDate(new Date(r.at))}.</p>`);
+}
+
+/* ============ Exportaciones ============ */
+function saveFile(filename,data,okMsg){
+  const blob=new Blob([data],{type:filename.endsWith('.json')?'application/json':'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);toast(okMsg||'Archivo descargado');
+}
+function pickImport(){const i=document.createElement('input');i.type='file';i.accept='.json,application/json';i.onchange=()=>{if(i.files[0])importBackup(i.files[0])};i.click()}
+function csvCell(s){s=String(s??'');return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}
+function gDate(d){return String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0')+'/'+d.getFullYear()}
+function gTime(min){const h=Math.floor(min/60)%24,m=min%60;return (h%12||12)+':'+String(m).padStart(2,'0')+' '+(h<12?'AM':'PM')}
+function buildCalendarCsv(weeks){
+  const rows=[['Subject','Start Date','Start Time','End Date','End Time','All Day Event','Description','Location','Private']];
+  const t=new Date(),start=new Date(t.getFullYear(),t.getMonth(),t.getDate());
+  for(let i=0;i<weeks*7;i++){const d=addDays(start,i);
+    for(const m of S.missions){for(const s of slotsOn(m,d)){if(!s.start)continue;
+      const st=toMin(s.start),en=st+Math.max(+s.dur||0,15),ed=addDays(d,Math.floor(en/1440));
+      rows.push([m.title,gDate(d),gTime(st),gDate(ed),gTime(en%1440),'False',((m.desc||'').slice(0,600)+'\n\nSemilla Estelar · '+ATTRS[m.attr].name).trim(),'','True'])}}}
+  return {csv:rows.map(r=>r.map(csvCell).join(',')).join('\r\n'),count:rows.length-1};
+}
+
+/* ============ Overlays y avisos ============ */
+function showLevelUp(L){
+  const ov=document.createElement('div');ov.className='overlay';
+  const newStage=STAGES.some(s=>s.from===L);
+  ov.innerHTML=`<div class="lvlup"><div class="emblem">${emblemSvg(L)}</div><span class="eyebrow">${newStage?'Nueva forma desbloqueada':'Has subido de nivel'}</span><h2>Nivel ${L}</h2><p style="font-family:var(--f-display);font-size:22px;margin:0">${esc(titleOf(L))}</p>${newStage?`<p class="muted">Semilla Estelar ahora es ${esc(stageOf(L).name)}.</p>`:''}<button class="btn primary">Continuar</button></div>`;
+  ov.querySelector('button').onclick=()=>ov.remove();document.body.appendChild(ov);ov.querySelector('button').focus();
+}
+let toastT;
+function toast(msg){document.querySelectorAll('.toast').forEach(t=>t.remove());const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=msg;document.body.appendChild(t);clearTimeout(toastT);toastT=setTimeout(()=>t.remove(),2800)}
+
+/* ============ Estrellas de fondo ============ */
+(function stars(){
+  const c=$('#stars'),x=c.getContext('2d');let pts=[];
+  const size=()=>{const dpr=Math.min(2,window.devicePixelRatio||1);c.width=innerWidth*dpr;c.height=innerHeight*dpr;c.style.width=innerWidth+'px';c.style.height=innerHeight+'px';x.setTransform(dpr,0,0,dpr,0,0);
+    const n=Math.round(innerWidth*innerHeight/9000);pts=Array.from({length:n},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.1+.2,p:Math.random()*6.28,s:.4+Math.random()}));};
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const draw=t=>{x.clearRect(0,0,innerWidth,innerHeight);for(const p of pts){const a=.25+.45*(reduce?.5:(Math.sin(t/1000*p.s+p.p)+1)/2);x.fillStyle=`rgba(220,228,245,${a})`;x.beginPath();x.arc(p.x,p.y,p.r,0,6.28);x.fill()}if(!reduce)requestAnimationFrame(draw)};
+  size();addEventListener('resize',size);requestAnimationFrame(draw);
+})();
+
+/* Refresca la vista "Hoy" cada minuto para mover el foco de la misión actual */
+setInterval(()=>{if(S&&VIEW==='hoy'&&!document.querySelector('.scrim,.overlay'))softRender()},60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S)softRender()});
+
+boot();
+</script>
+
+</body>
+</html>
