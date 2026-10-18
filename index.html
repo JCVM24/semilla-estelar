@@ -916,6 +916,7 @@ function viewHeroe(){
   </section>
   <section class="sec"><h2>Respaldo y cuenta</h2>
     <div class="pcard">
+      <div class="field"><label for="p-name">Nombre del personaje</label><input class="inp" id="p-name" data-name maxlength="40" value="${esc(S.name)}" autocomplete="off"></div>
       <div class="row"><button class="btn" data-act="expjson">Descargar respaldo</button><button class="btn" data-act="import">Importar respaldo</button><button class="btn ghost" data-act="logout">Cerrar sesión</button></div>
       <div class="muted" style="font-size:12.5px">Sesión: ${esc(Store.user?Store.user.email:'')}</div>
     </div>
@@ -927,17 +928,31 @@ function welcomeHtml(){
   return `<div class="welcome">
     <div class="emblem">${emblemSvg(1)}</div>
     <span class="eyebrow">Selvaluz · Orilla del Gran Río de Plata Dormida</span>
-    <h1 style="font-size:44px">Semilla Estelar</h1>
-    <p>Cayó del cielo una noche sin luna. Para crecer, debe cultivar siete virtudes con cada misión que cumpla. Cada rutina, cada clase y cada madrugada la acercan a su forma final.</p>
-    <p style="font-size:15px;font-family:var(--f-ui)">Al despertar se cargan tus clases, tus hábitos y el proyecto del anteproyecto. Todo se puede editar después.</p>
-    <div class="row"><button class="btn primary" id="awaken">Despertar a Semilla Estelar</button><button class="btn" id="wimport">Importar respaldo anterior</button></div>
-    <span class="muted" style="font-size:13px">¿Ya jugabas en la versión de Claude? Descarga allí tu respaldo (pestaña Personaje) e impórtalo aquí.</span>
+    <h1 style="font-size:44px">Despierta a tu héroe</h1>
+    <p>Una semilla cayó del cielo una noche sin luna. Para crecer debe cultivar siete virtudes, y cada misión que cumplas en tu vida real la acerca a su forma final.</p>
+    <div class="field" style="width:100%;max-width:380px"><label for="w-name">Nombre de tu personaje</label><input class="inp" id="w-name" maxlength="40" value="Semilla Estelar" autocomplete="off"></div>
+    <div class="stack" style="gap:10px;width:100%;max-width:460px">
+      <button class="btn primary" id="wblank" style="align-self:flex-start">Empezar desde cero</button>
+      <span class="muted" style="font-size:13px">Sin misiones: tú creas tus rutinas, hábitos y proyectos.</span>
+      <button class="btn" id="awaken" style="align-self:flex-start">Empezar con misiones de ejemplo</button>
+      <span class="muted" style="font-size:13px">Carga un horario universitario, hábitos de madrugada, ejercicio y un proyecto con hitos. Todo se puede editar o borrar.</span>
+      <button class="btn ghost" id="wimport" style="align-self:flex-start">Importar un respaldo</button>
+    </div>
     <span class="sync">${syncHtml()}</span>
   </div>`;
 }
 function bindWelcome(){
   $('#wimport').onclick=pickImport;
-  $('#awaken').onclick=()=>{S=blankState();S.missions=defaultMissions();Store.save();if(Store.mode==='cloud')Store.flush();VIEW='hoy';render();toast('Semilla Estelar ha despertado')};
+  const start=withMissions=>{
+    const name=($('#w-name').value||'').trim()||'Semilla Estelar';
+    S=blankState();S.name=name;S.player='';
+    if(withMissions)S.missions=defaultMissions();
+    Store.save();Store.flush();
+    VIEW=withMissions?'hoy':'misiones';render();
+    toast(withMissions?`${name} ha despertado`:`${name} ha despertado. Crea tu primera misión.`);
+  };
+  $('#wblank').onclick=()=>start(false);
+  $('#awaken').onclick=()=>start(true);
 }
 
 /* ============ Eventos ============ */
@@ -971,6 +986,7 @@ function bindView(){
     else if(a==='read'){const r=REWARDS.find(x=>x.id===id);if(r)readReward(r)}
   };
   main.onchange=e=>{const t=e.target;if(t.dataset.act==='mile')toggleMilestone(t.dataset.id,t.dataset.mi);
+    else if(t.hasAttribute('data-name')){const v=t.value.trim();if(!v){t.value=S.name;return}S.name=v;Store.save();toast('Nombre actualizado');softRender()}
     else if(t.dataset.set){const k=t.dataset.set;S.settings[k]=t.type==='checkbox'?t.checked:(k==='defaultRemind'?+t.value:t.value);Store.save();toast('Ajuste guardado')}};
 }
 function startTick(){clearInterval(tickT);if(!S||!S.timer)return;tickT=setInterval(()=>{document.querySelectorAll('[data-timer]').forEach(el=>el.textContent=fmtClock(Date.now()-(+el.dataset.timer)))},1000)}
